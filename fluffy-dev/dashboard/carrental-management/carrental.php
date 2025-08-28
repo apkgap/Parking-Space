@@ -4,7 +4,9 @@
  */
 
 function enqueue_carrental_js() {
-    wp_enqueue_script('carrental', get_template_directory_uri() . '/dashboard/carrental-management/js/carrental.js', array(), false, true);
+    if (is_page('dashboard')) {
+        wp_enqueue_script('carrental', get_template_directory_uri() . '/dashboard/carrental-management/js/carrental.js', array(), false, true);
+    }
 }
 add_action('wp_enqueue_scripts', 'enqueue_carrental_js');
 

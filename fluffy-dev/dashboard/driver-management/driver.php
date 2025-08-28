@@ -4,7 +4,9 @@
  */
 
 function enqueue_driver_js() {
-    wp_enqueue_script('driver', get_template_directory_uri() . '/dashboard/driver-management/js/driver.js', array(), false, true);
+    if (is_page('dashboard')) {
+        wp_enqueue_script('driver', get_template_directory_uri() . '/dashboard/driver-management/js/driver.js', array(), false, true);
+    }
 }
 add_action('wp_enqueue_scripts', 'enqueue_driver_js');
 

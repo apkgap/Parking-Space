@@ -1,8 +1,10 @@
 <?php 
 
 function enqueue_car_rental_scripts() {
-    wp_enqueue_style('car-rental-style', get_template_directory_uri() . '/customize/css/carrent.css');
-    wp_enqueue_script('car-rental-script', get_template_directory_uri() . '/customize/js/carrent.js', array('jquery'), null, true);
+    if (is_page('rentcar')) {
+        wp_enqueue_style('car-rental-style', get_template_directory_uri() . '/customize/css/carrent.css');
+        wp_enqueue_script('car-rental-script', get_template_directory_uri() . '/customize/js/carrent.js', array('jquery'), null, true);
+    }
 }
 add_action('wp_enqueue_scripts', 'enqueue_car_rental_scripts'); 
 
