@@ -7,6 +7,15 @@
 
 get_header();
 
+// Get booking reference and email from URL parameters
+$booking_ref = isset($_GET['ref']) ? sanitize_text_field($_GET['ref']) : '';
+$email = isset($_GET['email']) ? sanitize_email($_GET['email']) : '';
+$order_code = isset($_GET['order_code']) ? sanitize_text_field($_GET['order_code']) : '';
+
+// Determine booking type based on reference format
+$is_car_rental = !empty($booking_ref) && strpos($booking_ref, 'CR') === 0;
+$is_parking = !empty($order_code);
+
 ?>
 <div id="ty-page" class="min-h-screen flex items-center py-10">
     <div class="max-w-full w-full mx-auto">
@@ -43,23 +52,35 @@ get_header();
             <!-- Booking Info -->
             <div class="mb-6 space-y-3" style="border-bottom:1px solid #e5e7eb;">
                 <div class="container-m" style="max-width:500px;margin:auto;">
+                <?php if ($is_car_rental): ?>
                 <div class="flex items-center gap-2 rounded-lg px-3 py-2">
                     <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                     </svg>
-                    <span class="text-gray-800 thai-font flex-1">หมายเลขการจองของคุณ</span>
-                    <span class="font-bold text-lg text-cyan-600">1001</span>
+                    <span class="text-gray-800 thai-font flex-1">หมายเลขการจองรถเช่าของคุณ</span>
+                    <span class="font-bold text-lg text-cyan-600"><?php echo esc_html($booking_ref); ?></span>
                 </div>
+                <?php elseif ($is_parking): ?>
+                <div class="flex items-center gap-2 rounded-lg px-3 py-2">
+                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                    </svg>
+                    <span class="text-gray-800 thai-font flex-1">หมายเลขการจองที่จอดรถของคุณ</span>
+                    <span class="font-bold text-lg text-cyan-600"><?php echo esc_html($order_code); ?></span>
+                </div>
+                <?php endif; ?>
                 
+                <?php if (!empty($email)): ?>
                 <div class="flex items-center gap-2 rounded-lg px-3 py-2">
                     <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                     </svg>
                     <span class="text-gray-800 thai-font flex-1">อีเมลยืนยันถูกส่งไปที่</span>
                     <div class="relative">
-                        <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-semibold">Somchai@gmail.com</span>
+                        <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-semibold"><?php echo esc_html($email); ?></span>
                     </div>
                 </div>
+                <?php endif; ?>
                 </div>
             </div>
             

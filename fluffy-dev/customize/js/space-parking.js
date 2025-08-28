@@ -1045,15 +1045,23 @@ async function handleSubmit(event) {
                 }
             });
             renderAll();
-            // --- Redirect to thank you page ---
-            // window.location.href = '/thank-you/';
-            // ...reset ฟอร์มหรือ selectedSpaces ตรงนี้ถ้าต้องการ...
+            // --- Redirect to thank you page with order code and email ---
+            const email = document.querySelector('#email')?.value || '';
+            window.location.href = '/thank-you?order_code=' + response.data.order_code + '&email=' + encodeURIComponent(email);
         } else {
-            // ...existing error handling...
+            // Show error message
+            const errorMessage = response.data || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง';
+            $('.error-message').remove();
+            const $alert = $('<div class="alert alert-error error-message">' + errorMessage + '</div>');
+            $('.btn.btn-primary.w-full, #submit-btn').parent().prepend($alert);
         }
     } catch (error) {
         $('.box-loading').css('display', 'none');
-        // ...existing error handling...
+        // Show error message
+        const errorMessage = 'เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์ กรุณาตรวจสอบการเชื่อมต่อและลองใหม่อีกครั้ง';
+        $('.error-message').remove();
+        const $alert = $('<div class="alert alert-error error-message">' + errorMessage + '</div>');
+        $('.btn.btn-primary.w-full, #submit-btn').parent().prepend($alert);
     }
 }
 

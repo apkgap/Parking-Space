@@ -128,7 +128,9 @@ jQuery(document).ready(function($) {
                 if (res.success) {
                     // แสดง loading อีก 2 วินาทีก่อน redirect
                     setTimeout(function() {
-                        window.location.href = '/thank-you?ref=' + res.data.booking_reference;
+                        // Get email from form
+                        var email = $('#email').val();
+                        window.location.href = '/thank-you?ref=' + res.data.booking_reference + '&email=' + encodeURIComponent(email);
                     }, 2000);
                 } else {                
                     showFieldError($('#carBookingFormBtn'), res.data?.message || 'An error occurred while creating your booking');
@@ -145,6 +147,9 @@ jQuery(document).ready(function($) {
                 } else if (xhr.responseJSON?.data?.message) {
                     errorMessage = xhr.responseJSON.data.message;
                 }
+                
+                // Display error message to user
+                showFieldError($('#carBookingFormBtn'), errorMessage);
             },
             complete: function() {
                 // ยกเลิก timeout และซ่อน loading (เฉพาะเมื่อไม่ redirect)

@@ -271,7 +271,7 @@ get_header();
                                     <div class="popup_span w-full hide"></div>
                                 </div>
                                 <div class="flex flex-col flex-1">
-                                    <label for="childCount" class="block text-gray-700 font-medium mb-1"><span class="text-red-500 pr-2">*</span>จำนวนผู้โดยสาร (เด็ก)</label>
+                                    <label for="childCount" class="block text-gray-700 font-medium mb-1">จำนวนผู้โดยสาร (เด็ก)</label>
                                     <input
                                         type="range"
                                         id="childCount"
@@ -286,7 +286,6 @@ get_header();
                                         <div id="childCount-display" class="quantity-display">0</div>
                                         คน
                                     </span>
-                                    <div class="popup_span w-full hide"></div>
                                 </div>
                             </div>
                             <div class="mb-4">
@@ -410,7 +409,7 @@ get_header();
                         
                         <!-- Outbound Trip -->
                         <div class="mb-4 summary-trip-outbound">
-                            <h4 class="font-medium text-md mb-2 text-blue-600 flex items-center gap-2"><span class="hidden sm:inline">✈️</span>เที่ยวขาไป</h4>
+                            <h4 class="font-medium text-md mb-2 text-black flex items-center gap-2">เที่ยวขาไป</h4>
                             <div class="divide-y divide-gray-200 space-y-2">
                                 <div class="py-1 flex flex-col sm:flex-row justify-between items-start sm:items-center summary-data-row gap-1 sm:gap-0">
                                     <span class="text-sm text-gray-600">ต้นทาง:</span>
@@ -441,7 +440,7 @@ get_header();
 
                         <!-- Return Trip -->
                         <div id="summary-return-trip" class="mb-4 summary-trip-return" style="display: none;">
-                            <h4 class="font-medium text-md mb-2 text-green-600 flex items-center gap-2"><span class="hidden sm:inline">🔄</span>เที่ยวขากลับ</h4>
+                            <h4 class="font-medium text-md mb-2 text-black flex items-center gap-2">เที่ยวขากลับ</h4>
                             <div class="divide-y divide-gray-200 space-y-2">
                                 <div class="py-1 flex flex-col sm:flex-row justify-between items-start sm:items-center summary-data-row gap-1 sm:gap-0">
                                     <span class="text-sm text-gray-600">ต้นทาง:</span>
@@ -472,7 +471,7 @@ get_header();
 
                         <!-- Booking Details -->
                         <div class="mb-4 summary-booking">
-                            <h4 class="font-medium text-md mb-2 text-purple-600 flex items-center gap-2"><span class="hidden sm:inline">🚗</span>รายละเอียดการจอง</h4>
+                            <h4 class="font-medium text-md mb-2 text-black flex items-center gap-2">รายละเอียดการจอง</h4>
                             <div class="divide-y divide-gray-200 space-y-2">
                                 <div class="py-1 flex flex-col sm:flex-row justify-between items-start sm:items-center summary-data-row gap-1 sm:gap-0">
                                     <span class="text-sm text-gray-600">ประเภทรถ:</span>
@@ -496,7 +495,7 @@ get_header();
 
                     <!-- Flight Information Summary -->
                     <div class="mb-6 summary-flight">
-                        <h3 class="font-semibold text-lg mb-3 text-gray-800 flex items-center gap-2"><span class="hidden sm:inline">✈️</span>ข้อมูลเที่ยวบิน</h3>
+                        <h3 class="font-semibold text-lg mb-3 text-black flex items-center gap-2">ข้อมูลเที่ยวบิน</h3>
                         <div class="divide-y divide-gray-200 space-y-2">
                             <div class="py-1 flex flex-col sm:flex-row justify-between items-start sm:items-center summary-data-row gap-1 sm:gap-0">
                                 <span class="text-sm text-gray-600">เที่ยวบินขาเข้า:</span>

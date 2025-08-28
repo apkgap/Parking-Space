@@ -971,6 +971,11 @@ function generate_booking_qr_code_svg_both( $booking_id, $order_code ) {
             ->build();
 
         $svg = $result->getString(); // <-- SVG code ตรง ๆ
+        
+        // Ensure viewBox attribute is present for proper scaling
+        if (strpos($svg, 'viewBox') === false) {
+            $svg = preg_replace('/<svg/', '<svg viewBox="0 0 300 300"', $svg, 1);
+        }
 
         // เขียนไฟล์ (เผื่ออยากใช้เป็นไฟล์ด้วย)
         file_put_contents($file_path, $svg);
@@ -1168,6 +1173,24 @@ function insert_parking_booking() {
         ], $post_id);
     }
 
+    // Send email confirmation
+    if (!empty($profile['email'])) {
+        // Generate email content
+        $email_content = generate_parking_booking_email_template($data, $order_code, $post_id);
+        
+        // Email headers
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ' . get_bloginfo('name') . ' <' . get_option('admin_email') . '>'
+        );
+        
+        // Send email to customer
+        wp_mail($profile['email'], 'ยืนยันการจองที่จอดรถ - ' . $order_code, $email_content, $headers);
+        
+        // Send email to admin
+        wp_mail(get_option('admin_email'), 'มีการจองที่จอดรถใหม่ - ' . $order_code, $email_content, $headers);
+    }
+
     wp_send_json_success([
         'message' => 'บันทึกสำเร็จ',
         'post_id' => $post_id,
@@ -1178,93 +1201,520 @@ function insert_parking_booking() {
     ]);
 }
 
+// ========= Parking Booking Email Template =========
+
+function generate_parking_booking_email_template($booking_data, $order_code, $post_id) {
+    $site_name = get_bloginfo('name');
+    $site_url = get_bloginfo('url');
+    $admin_email = get_option('admin_email');
+    
+    // Extract customer information
+    $full_name = isset($booking_data['profile']['fullname']) ? esc_html($booking_data['profile']['fullname']) : '';
+    $email = isset($booking_data['profile']['email']) ? esc_html($booking_data['profile']['email']) : '';
+    $phone = isset($booking_data['profile']['phone']) ? esc_html($booking_data['profile']['phone']) : '';
+    $line_id = isset($booking_data['profile']['lineid']) ? esc_html($booking_data['profile']['lineid']) : '';
+    
+    // Extract booking dates and times
+    $start_date = isset($booking_data['startDate']) ? esc_html($booking_data['startDate']) : '';
+    $start_time = isset($booking_data['startTime']) ? esc_html($booking_data['startTime']) : '';
+    $end_date = isset($booking_data['endDate']) ? esc_html($booking_data['endDate']) : '';
+    $end_time = isset($booking_data['endTime']) ? esc_html($booking_data['endTime']) : '';
+    
+    // Extract location information
+    $location_name = '';
+    if (!empty($booking_data['location'])) {
+        $location_term = get_term($booking_data['location'], 'location');
+        if ($location_term && !is_wp_error($location_term)) {
+            $location_name = $location_term->name;
+        }
+    }
+    
+    // Extract addon information
+    $service_pickup = isset($booking_data['addon']['servicePickup']) ? $booking_data['addon']['servicePickup'] : false;
+    $service_valet = isset($booking_data['addon']['serviceValet']) ? $booking_data['addon']['serviceValet'] : false;
+    
+    // Sending flight information
+    $sending_depart = isset($booking_data['addon']['sending']['flightDepart']) ? esc_html($booking_data['addon']['sending']['flightDepart']) : '';
+    $sending_depart_time = isset($booking_data['addon']['sending']['flightDepartTime']) ? esc_html($booking_data['addon']['sending']['flightDepartTime']) : '';
+    $sending_arrival = isset($booking_data['addon']['sending']['flightArrival']) ? esc_html($booking_data['addon']['sending']['flightArrival']) : '';
+    $sending_arrival_time = isset($booking_data['addon']['sending']['flightArrivalTime']) ? esc_html($booking_data['addon']['sending']['flightArrivalTime']) : '';
+    $sending_pickup_time = isset($booking_data['addon']['sending']['pickupTime']) ? esc_html($booking_data['addon']['sending']['pickupTime']) : '';
+    $sending_dropoff_time = isset($booking_data['addon']['sending']['dropoffTime']) ? esc_html($booking_data['addon']['sending']['dropoffTime']) : '';
+    $sending_pickup_point = isset($booking_data['addon']['sending']['pickupPoint']) ? esc_html($booking_data['addon']['sending']['pickupPoint']) : '';
+    $sending_dropoff_point = isset($booking_data['addon']['sending']['dropoffPoint']) ? esc_html($booking_data['addon']['sending']['dropoffPoint']) : '';
+    $sending_adult_count = isset($booking_data['addon']['sending']['adultCount']) ? esc_html($booking_data['addon']['sending']['adultCount']) : '';
+    $sending_child_count = isset($booking_data['addon']['sending']['childCount']) ? esc_html($booking_data['addon']['sending']['childCount']) : '';
+    $sending_baggage_count = isset($booking_data['addon']['sending']['baggageCount']) ? esc_html($booking_data['addon']['sending']['baggageCount']) : '';
+    $sending_pickup_note = isset($booking_data['addon']['sending']['pickupNote']) ? esc_html($booking_data['addon']['sending']['pickupNote']) : '';
+    
+    // Parking car information
+    $parking_depart = isset($booking_data['addon']['parking']['flightDepart']) ? esc_html($booking_data['addon']['parking']['flightDepart']) : '';
+    $parking_depart_time = isset($booking_data['addon']['parking']['flightDepartTime']) ? esc_html($booking_data['addon']['parking']['flightDepartTime']) : '';
+    $parking_arrival = isset($booking_data['addon']['parking']['flightArrival']) ? esc_html($booking_data['addon']['parking']['flightArrival']) : '';
+    $parking_arrival_time = isset($booking_data['addon']['parking']['flightArrivalTime']) ? esc_html($booking_data['addon']['parking']['flightArrivalTime']) : '';
+    $parking_pickup_time = isset($booking_data['addon']['parking']['pickupTime']) ? esc_html($booking_data['addon']['parking']['pickupTime']) : '';
+    $parking_dropoff_time = isset($booking_data['addon']['parking']['dropoffTime']) ? esc_html($booking_data['addon']['parking']['dropoffTime']) : '';
+    $parking_pickup_point = isset($booking_data['addon']['parking']['pickupPoint']) ? esc_html($booking_data['addon']['parking']['pickupPoint']) : '';
+    $parking_dropoff_point = isset($booking_data['addon']['parking']['dropoffPoint']) ? esc_html($booking_data['addon']['parking']['dropoffPoint']) : '';
+    $parking_pickup_note = isset($booking_data['addon']['parking']['pickupNote']) ? esc_html($booking_data['addon']['parking']['pickupNote']) : '';
+    
+    $html = '<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <title>Booking Confirmation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    @media screen and (max-width:600px){
+      .container{width:100% !important}
+      .px-24{padding-left:16px !important; padding-right:16px !important}
+      .py-32{padding-top:20px !important; padding-bottom:20px !important}
+      .stack{display:block !important; width:100% !important}
+      .text-center-sm{text-align:center !important}
+    }
+    a[x-apple-data-detectors]{color:inherit !important; text-decoration:none !important;}
+    body {margin:0; padding:0; background:#f2f4f6; font-family:Arial, Helvetica, sans-serif;}
+    table {border-collapse: collapse;}
+  </style>
+</head>
+<body style="margin:0; padding:0; background:#f2f4f6; font-family:Arial, Helvetica, sans-serif;">
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tr>
+      <td align="center" style="padding:0 12px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px; max-width:600px; background:#ffffff; border-radius:8px; overflow:hidden;">
+          
+          <!-- Header -->
+          <tr>
+            <td bgcolor="#29b2e2" style="padding:18px 24px; color:#ffffff;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td class="text-center-sm" style="font-weight:bold; font-size:20px;">' . $site_name . '</td>
+                  <td align="right" class="text-center-sm">
+                    <a href="' . $site_url . '" style="color:#ffffff; text-decoration:none; font-size:14px;">OK Parking ▸</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Title -->
+          <tr>
+            <td align="center" class="px-24 py-32" style="padding:28px 24px;">
+              <img src="' . $site_url . '/wp-content/uploads/2024/05/logo-OK-Parking.svg" width="150" height="150" alt="Success" style="display:block; margin:0 auto 12px; border-radius:32px;">
+              <div style="font-size:22px; font-weight:bold; color:#333;">ขอบคุณสำหรับการจองของคุณ!</div>
+              <div style="font-size:13px; color:#666;">เราได้รับการจองของคุณแล้ว</div>
+            </td>
+          </tr>
+
+          <!-- Order summary -->
+          <tr>
+            <td class="px-24" style="padding:0 24px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e5e7eb; border-radius:6px;">
+                <tr>
+                  <td colspan="2" style="padding:16px; font-weight:bold; color:#111827;">สรุปรายการจอง</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">หมายเลขออเดอร์</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $order_code . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">ชื่อผู้จอง</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $full_name . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">อีเมล</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $email . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">เบอร์โทรศัพท์</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $phone . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">LINE ID</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $line_id . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">สถานที่</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $location_name . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">วันที่เริ่มต้น</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $start_date . ' ' . $start_time . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">วันที่สิ้นสุด</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $end_date . ' ' . $end_time . '</td>
+                </tr>';
+    
+    // Add addon services if selected
+    if ($service_pickup || $service_valet) {
+        $html .= '<tr>
+                  <td style="padding:12px 16px; color:#666;">บริการเสริม</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">';
+        
+        if ($service_pickup) {
+            $html .= 'บริการรับ-ส่งสนามบิน<br>';
+        }
+        
+        if ($service_valet) {
+            $html .= 'บริการรับ-ส่งรถ (Valet)';
+        }
+        
+        $html .= '</td>
+                </tr>';
+    }
+    
+    $html .= '              </table>
+            </td>
+          </tr>';
+    
+    // Vehicle information section
+    if (!empty($booking_data['selectedParkingSpaces']) && is_array($booking_data['selectedParkingSpaces'])) {
+        $html .= '
+          <!-- Vehicle Information -->
+          <tr>
+            <td class="px-24" style="padding:8px 24px 24px;">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td class="stack" width="100%" valign="top" style="padding:16px; border:1px solid #e5e7eb; border-radius:6px;">
+                    <div style="font-weight:bold; color:#111; margin-bottom:6px;">ข้อมูลรถ</div>';
+        
+        foreach ($booking_data['selectedParkingSpaces'] as $index => $space) {
+            $license_plate = isset($space['licensePlate']) ? esc_html($space['licensePlate']) : '';
+            $other_type_car = isset($space['otherTypeCar']) ? esc_html($space['otherTypeCar']) : '';
+            $parking_slot_id = isset($space['parking_id']) ? esc_html($space['parking_id']) : '';
+            
+            $html .= '<div style="font-size:13px; color:#555; line-height:1.5; margin-top:10px; padding-top:10px; border-top:1px solid #eee;">
+                      รถ #' . ($index + 1) . '<br>
+                      ทะเบียนรถ: ' . $license_plate . '<br>
+                      ประเภทรถ: ' . $other_type_car . '<br>
+                      ช่องจอด: ' . $parking_slot_id . '
+                    </div>';
+        }
+        
+        // Add QR code if available
+        $qr_code_url = get_field('qr_code_url', $post_id);
+        
+        if ($qr_code_url) {
+            $html .= '<div style="margin-top:20px; text-align:center;">
+                        <div style="font-weight:bold; color:#111; margin-bottom:10px;">QR Code สำหรับการเข้า-ออก</div>
+                        <div style="display:inline-block; padding:15px; background:#ffffff; border:1px solid #e5e7eb; border-radius:8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                          <img src="' . esc_url($qr_code_url) . '" alt="QR Code" style="width:200px; height:200px;">
+                        </div>
+                        <div style="font-size:12px; color:#666; margin-top:8px;">กรุณาแสดง QR Code นี้ ณ จุดเข้า-ออก</div>
+                      </div>';
+        }
+        
+        $html .= '                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>';
+    }
+    
+    // Sending flight information section
+    if (!empty($sending_depart) || !empty($sending_arrival)) {
+        $html .= '
+          <!-- Sending Flight Information -->
+          <tr>
+            <td class="px-24" style="padding:8px 24px 24px;">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td class="stack" width="100%" valign="top" style="padding:16px; border:1px solid #e5e7eb; border-radius:6px;">
+                    <div style="font-weight:bold; color:#111; margin-bottom:6px;">ข้อมูลเที่ยวบินขาไป</div>
+                    <div style="font-size:13px; color:#555; line-height:1.5;">';
+        
+        if (!empty($sending_depart)) {
+            $html .= 'เที่ยวบินขาออก: ' . $sending_depart . ' เวลา ' . $sending_depart_time . '<br>';
+        }
+        
+        if (!empty($sending_arrival)) {
+            $html .= 'เที่ยวบินขาเข้า: ' . $sending_arrival . ' เวลา ' . $sending_arrival_time . '<br>';
+        }
+        
+        if (!empty($sending_pickup_time)) {
+            $html .= 'เวลารับรถ: ' . $sending_pickup_time . '<br>';
+        }
+        
+        if (!empty($sending_dropoff_time)) {
+            $html .= 'เวลาส่งรถ: ' . $sending_dropoff_time . '<br>';
+        }
+        
+        if (!empty($sending_pickup_point)) {
+            $html .= 'จุดรับรถ: ' . $sending_pickup_point . '<br>';
+        }
+        
+        if (!empty($sending_dropoff_point)) {
+            $html .= 'จุดส่งรถ: ' . $sending_dropoff_point . '<br>';
+        }
+        
+        if (!empty($sending_adult_count)) {
+            $html .= 'จำนวนผู้ใหญ่: ' . $sending_adult_count . ' คน<br>';
+        }
+        
+        if (!empty($sending_child_count)) {
+            $html .= 'จำนวนเด็ก: ' . $sending_child_count . ' คน<br>';
+        }
+        
+        if (!empty($sending_baggage_count)) {
+            $html .= 'จำนวนกระเป๋า: ' . $sending_baggage_count . ' ใบ<br>';
+        }
+        
+        if (!empty($sending_pickup_note)) {
+            $html .= 'หมายเหตุการรับรถ:<br>' . nl2br($sending_pickup_note) . '<br>';
+        }
+        
+        $html .= '                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>';
+    }
+    
+    // Parking car information section
+    if (!empty($parking_depart) || !empty($parking_arrival)) {
+        $html .= '
+          <!-- Parking Car Information -->
+          <tr>
+            <td class="px-24" style="padding:8px 24px 24px;">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td class="stack" width="100%" valign="top" style="padding:16px; border:1px solid #e5e7eb; border-radius:6px;">
+                    <div style="font-weight:bold; color:#111; margin-bottom:6px;">ข้อมูลเที่ยวบินขากลับ</div>
+                    <div style="font-size:13px; color:#555; line-height:1.5;">';
+        
+        if (!empty($parking_depart)) {
+            $html .= 'เที่ยวบินขาออก: ' . $parking_depart . ' เวลา ' . $parking_depart_time . '<br>';
+        }
+        
+        if (!empty($parking_arrival)) {
+            $html .= 'เที่ยวบินขาเข้า: ' . $parking_arrival . ' เวลา ' . $parking_arrival_time . '<br>';
+        }
+        
+        if (!empty($parking_pickup_time)) {
+            $html .= 'เวลารับรถ: ' . $parking_pickup_time . '<br>';
+        }
+        
+        if (!empty($parking_dropoff_time)) {
+            $html .= 'เวลาส่งรถ: ' . $parking_dropoff_time . '<br>';
+        }
+        
+        if (!empty($parking_pickup_point)) {
+            $html .= 'จุดรับรถ: ' . $parking_pickup_point . '<br>';
+        }
+        
+        if (!empty($parking_dropoff_point)) {
+            $html .= 'จุดส่งรถ: ' . $parking_dropoff_point . '<br>';
+        }
+        
+        if (!empty($parking_pickup_note)) {
+            $html .= 'หมายเหตุการรับรถ:<br>' . nl2br($parking_pickup_note) . '<br>';
+        }
+        
+        $html .= '                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>';
+    }
+    
+    $html .= '
+          <!-- Promo block -->
+          <tr>
+            <td bgcolor="#29b2e2" align="center" style="padding:28px 24px; color:#ffffff;">
+              <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">ขอบคุณที่ใช้บริการของเรา!</div>
+              <div style="font-size:14px; margin-bottom:15px;">หากมีข้อสงสัยกรุณาติดต่อ: ' . $admin_email . '</div>
+              <a href="' . $site_url . '" 
+                 style="display:inline-block; background:#1c8db8; color:#ffffff; text-decoration:none; 
+                        padding:12px 22px; border-radius:4px; font-weight:bold; font-size:14px;">
+                กลับไปที่เว็บไซต์
+              </a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding:24px; background:#f7f7f7;">
+              <div style="font-size:12px; color:#666;">
+                <div><strong>' . $site_name . '</strong> • ' . $admin_email . '</div>
+                <div style="margin-top:8px;">
+                  <a href="' . $site_url . '/preferences" style="color:#29b2e2; text-decoration:none;">ตั้งค่าการรับอีเมล</a> • 
+                  <a href="' . $site_url . '/unsubscribe" style="color:#29b2e2; text-decoration:none;">ยกเลิกรับข่าวสาร</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>';
+    
+    return $html;
+}
+
+// Test function for parking booking email template
+function test_parking_booking_email() {
+    // Sample booking data for testing
+    $booking_data = [
+        'profile' => [
+            'fullname' => 'John Doe',
+            'email' => 'john.doe@example.com',
+            'phone' => '0812345678',
+            'lineid' => 'johndoe_line'
+        ],
+        'startDate' => '2024-06-15',
+        'startTime' => '09:00',
+        'endDate' => '2024-06-17',
+        'endTime' => '18:00',
+        'location' => 15, // Sample location ID
+        'addon' => [
+            'servicePickup' => true,
+            'serviceValet' => false,
+            'sending' => [
+                'flightDepart' => 'TG123',
+                'flightDepartTime' => '08:30',
+                'flightArrival' => 'TG456',
+                'flightArrivalTime' => '10:45',
+                'pickupTime' => '07:00',
+                'dropoffTime' => '11:30',
+                'pickupPoint' => 'Home Address',
+                'dropoffPoint' => 'Airport Terminal 1',
+                'adultCount' => '2',
+                'childCount' => '1',
+                'baggageCount' => '3',
+                'pickupNote' => 'Please wait at the lobby.'
+            ],
+            'parking' => [
+                'flightDepart' => 'TG789',
+                'flightDepartTime' => '16:30',
+                'flightArrival' => 'TG012',
+                'flightArrivalTime' => '18:45',
+                'pickupTime' => '19:30',
+                'dropoffTime' => '15:00',
+                'pickupPoint' => 'Airport Terminal 2',
+                'dropoffPoint' => 'Home Address',
+                'pickupNote' => 'Call upon arrival.'
+            ]
+        ],
+        'selectedParkingSpaces' => [
+            [
+                'licensePlate' => 'AB1234',
+                'otherTypeCar' => 'Sedan',
+                'parking_id' => 'P-101'
+            ],
+            [
+                'licensePlate' => 'CD5678',
+                'otherTypeCar' => 'SUV',
+                'parking_id' => 'P-102'
+            ]
+        ]
+    ];
+    
+    // Sample order code and post ID
+    $order_code = 'ORD-20240615-001';
+    $post_id = 123;
+    
+    // Generate the email template
+    $email_html = generate_parking_booking_email_template($booking_data, $order_code, $post_id);
+    
+    // Output the email template
+    echo $email_html;
+}
+
 // ========= 2C2P Payment Gateway Integration =========
 
-add_action('wp_ajax_initiate_payment', 'handle_2c2p_payment');
-add_action('wp_ajax_nopriv_initiate_payment', 'handle_2c2p_payment');
+// add_action('wp_ajax_initiate_payment', 'handle_2c2p_payment');
+// add_action('wp_ajax_nopriv_initiate_payment', 'handle_2c2p_payment');
 
-function handle_2c2p_payment() {
-    if (!isset($_POST['booking_id']) || !isset($_POST['fine'])) {
-        wp_send_json_error('Missing payment data.');
-    }
+// function handle_2c2p_payment() {
+//     if (!isset($_POST['booking_id']) || !isset($_POST['fine'])) {
+//         wp_send_json_error('Missing payment data.');
+//     }
 
-    $booking_id = intval($_POST['booking_id']);
-    $fine = floatval($_POST['fine']);
-    $order_code = get_field('order_code', $booking_id);
+//     $booking_id = intval($_POST['booking_id']);
+//     $fine = floatval($_POST['fine']);
+//     $order_code = get_field('order_code', $booking_id);
 
-    if (!$order_code) {
-        wp_send_json_error('Invalid booking.');
-    }
+//     if (!$order_code) {
+//         wp_send_json_error('Invalid booking.');
+//     }
 
-    // --- 2C2P Configuration ---
-    // IMPORTANT: Replace with your actual Merchant ID and Secret Key
-    $merchant_id = get_field('2c2p_merchant_id', 'option');
-    $secret_key = get_field('2c2p_secret_key', 'option');
-    $payment_url = 'https://demo2.2c2p.com/2C2PFrontEnd/Redirect/V3/payment'; // Use production URL for live
+//     // --- 2C2P Configuration ---
+//     // IMPORTANT: Replace with your actual Merchant ID and Secret Key
+//     $merchant_id = get_field('2c2p_merchant_id', 'option');
+//     $secret_key = get_field('2c2p_secret_key', 'option');
+//     $payment_url = 'https://demo2.2c2p.com/2C2PFrontEnd/Redirect/V3/payment'; // Use production URL for live
 
-    // --- Payment Details ---
-    $version = '8.5';
-    $amount = str_pad(number_format($fine, 2, '', ''), 12, '0', STR_PAD_LEFT);
-    $currency = '764'; // THB currency code
-    $desc = 'Fine for booking ' . $order_code;
-    $invoice_no = $order_code . '-' . time(); // Unique invoice number
+//     // --- Payment Details ---
+//     $version = '8.5';
+//     $amount = str_pad(number_format($fine, 2, '', ''), 12, '0', STR_PAD_LEFT);
+//     $currency = '764'; // THB currency code
+//     $desc = 'Fine for booking ' . $order_code;
+//     $invoice_no = $order_code . '-' . time(); // Unique invoice number
 
-    // --- Response URLs ---
-    $frontend_url = home_url('/payment-complete/');
-    $backend_url = home_url('/wp-json/custom/v1/payment_callback');
+//     // --- Response URLs ---
+//     $frontend_url = home_url('/payment-complete/');
+//     $backend_url = home_url('/wp-json/custom/v1/payment_callback');
 
-    // --- Create Hash ---
-    $string_to_hash = $version . $merchant_id . $invoice_no . $amount . $currency . $desc . $frontend_url . $backend_url;
-    $hash = hash_hmac('sha256', $string_to_hash, $secret_key, false);
+//     // --- Create Hash ---
+//     $string_to_hash = $version . $merchant_id . $invoice_no . $amount . $currency . $desc . $frontend_url . $backend_url;
+//     $hash = hash_hmac('sha256', $string_to_hash, $secret_key, false);
 
-    // --- Build Redirect Form ---
-    $form_fields = [
-        'version' => $version,
-        'merchant_id' => $merchant_id,
-        'invoice_no' => $invoice_no,
-        'amount' => $amount,
-        'currency' => $currency,
-        'transaction_ref' => $booking_id, // Pass booking ID for reference
-        'desc' => $desc,
-        'frontend_url' => $frontend_url,
-        'backend_url' => $backend_url,
-        'hash' => $hash,
-    ];
+//     // --- Build Redirect Form ---
+//     $form_fields = [
+//         'version' => $version,
+//         'merchant_id' => $merchant_id,
+//         'invoice_no' => $invoice_no,
+//         'amount' => $amount,
+//         'currency' => $currency,
+//         'transaction_ref' => $booking_id, // Pass booking ID for reference
+//         'desc' => $desc,
+//         'frontend_url' => $frontend_url,
+//         'backend_url' => $backend_url,
+//         'hash' => $hash,
+//     ];
 
-    $form_html = '<form id="payment_form" method="POST" action="' . esc_url($payment_url) . '">';
-    foreach ($form_fields as $key => $value) {
-        $form_html .= '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
-    }
-    $form_html .= '</form>';
-    $form_html .= '<script>document.getElementById("payment_form").submit();</script>';
+//     $form_html = '<form id="payment_form" method="POST" action="' . esc_url($payment_url) . '">';
+//     foreach ($form_fields as $key => $value) {
+//         $form_html .= '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
+//     }
+//     $form_html .= '</form>';
+//     $form_html .= '<script>document.getElementById("payment_form").submit();</script>';
 
-    wp_send_json_success(['redirect_form' => $form_html]);
-}
+//     wp_send_json_success(['redirect_form' => $form_html]);
+// }
 
-add_action('rest_api_init', function () {
-    register_rest_route('custom/v1', '/payment_callback', array(
-        'methods' => 'POST',
-        'callback' => 'handle_2c2p_callback',
-        'permission_callback' => '__return_true',
-    ));
-});
+// add_action('rest_api_init', function () {
+//     register_rest_route('custom/v1', '/payment_callback', array(
+//         'methods' => 'POST',
+//         'callback' => 'handle_2c2p_callback',
+//         'permission_callback' => '__return_true',
+//     ));
+// });
 
-function handle_2c2p_callback($request) {
-    $params = $request->get_params();
-    $booking_id = intval($params['transaction_ref'] ?? 0);
-    $status = $params['payment_status'] ?? '';
+// function handle_2c2p_callback($request) {
+//     $params = $request->get_params();
+//     $booking_id = intval($params['transaction_ref'] ?? 0);
+//     $status = $params['payment_status'] ?? '';
 
-    if ($booking_id && $status === '000') { // '000' indicates success
-        // Update booking status to 'paid'
-        update_field('payment_status', 'paid', $booking_id);
-        update_field('booking_status', 'checked-out', $booking_id);
-    }
+//     if ($booking_id && $status === '000') { // '000' indicates success
+//         // Update booking status to 'paid'
+//         update_field('payment_status', 'paid', $booking_id);
+//         update_field('booking_status', 'checked-out', $booking_id);
+//     }
 
-    // Log the response for debugging
-    error_log('2C2P Callback: ' . print_r($params, true));
+//     // Log the response for debugging
+//     error_log('2C2P Callback: ' . print_r($params, true));
 
-    return new WP_REST_Response('Callback received.', 200);
-}
+//     return new WP_REST_Response('Callback received.', 200);
+// }
 
 // REST API: Tabien Rod endpoints
 add_action('rest_api_init', function () {
@@ -1494,10 +1944,4 @@ function update_theme_settings_data( $request ) {
         'data' => get_theme_settings_data( $request ),
     ];
 }
-
-
-
-
-
 ?>
-
