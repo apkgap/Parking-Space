@@ -1,0 +1,31 @@
+ #return-box {
+    display: none;
+}
+.ib_departTime,
+.ib_returnTime,
+.ib_arrivalFlightTime,
+.ib_departureFlightTime {
+    position: absolute;
+    width: 300px;
+    top: 100%;
+    z-index: 10;
+}
+.ssi-con svg {
+    stroke: #ffff;
+}
+.ssi-con > div {
+    background: rgb(21 196 155);
+}
+.ssi-con-ttext, .ssi-con-ttext h2, .ssi-con-ttext p {
+    color: rgb(21 196 155);
+}
+.ssi-con-ttext p.text-red-500.text-xs.thai-font {
+    color: red;
+    font-size: 14px;
+    font-weight: 500;
+}
+#line-icon svg {
+    width: 23px;
+    height: 23px;
+    fill: #fff;
+}

@@ -1,0 +1,405 @@
+<?php  
+// ลงทะเบียน shortcode
+add_shortcode('car_route_search', 'render_route_search_shortcode');
+function render_route_search_shortcode() {
+    // Enqueue scripts when shortcode is used
+    handle_ajax_search_price();
+    
+    ob_start();
+    ?>
+        <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-md sticky top-8 p-4 sm:p-6 md:p-8 mb-[2em]">
+            <h2 class="text-center text-2xl font-semibold text-gray-800 mb-8">ค้นหาบริการรถเช่า</h2>
+
+            <form method="POST" action="" id="route-search-form" class="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0 items-end mb-6">
+                <div class="flex flex-col flex-1">
+                    <label for="origin" class="block mb-2 font-semibold text-gray-700">
+                        <strong>ต้นทาง:</strong>
+                    </label>
+                    <select name="origin" id="origin" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white">
+                        <option value="">เลือกจุดเริ่มต้น...</option>
+                        <?php echo get_location_options('origin'); ?>
+                    </select>
+                </div>
+                <div class="flex flex-col flex-1">
+                    <label for="destination" class="block mb-2 font-semibold text-gray-700">
+                        <strong>ปลายทาง:</strong>
+                    </label>
+                    <select name="destination" id="destination" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white">
+                        <option value="">เลือกจุดหมาย...</option>
+                        <?php echo get_location_options('destination'); ?>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <button id="carrent-search-btn" type="submit" class="w-full bg-primary hover:bg-primary text-white font-semibold py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] text-lg flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        ค้นหาราคา
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div id="search-results" class="fixed inset-0 z-50 flex items-center justify-center bg-tranparent bg-opacity-40 z-999 hidden">
+            <div class="blur"></div>
+            <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 relative">
+                <button type="button" onclick="closeSearchResults()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-2xl font-bold"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                <div id="results-content"></div>
+            </div>
+        </div>
+
+        <div id="result-choose" class="result-choose mb-[2em]">
+
+        </div>
+        <script>
+        function closeSearchResults() {
+            document.getElementById('search-results').classList.add('hidden');
+            document.getElementById('results-content').innerHTML = '';
+        }
+        </script>
+    <?php
+    return ob_get_clean();
+}
+
+// Handle AJAX for search price functionality
+function handle_ajax_search_price() {
+    wp_enqueue_style(
+        'service-search-style',
+        get_template_directory_uri() . '/customize/css/service.css',
+        array(),
+        '1.0.0'
+    );
+    
+    wp_enqueue_script(
+        'ajax-search-price',
+        get_template_directory_uri() . '/customize/js/ajax-search-price.js',
+        array('jquery'),
+        '1.0.0',
+        true
+    );
+
+    wp_localize_script(
+        'ajax-search-price',
+        'ajax_search_price_obj',
+        array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce'    => wp_create_nonce('search_price_nonce'),
+        )
+    );
+}
+
+// ดึงรายการ Location สำหรับ Select2
+function get_location_options($field_name) {
+    $args = array(
+        'post_type'      => 'package_rent',
+        'post_status'    => 'publish',
+        'posts_per_page' => -1,
+        'fields'         => 'ids'
+    );
+
+    $query = new WP_Query($args);
+    $locations = array();
+
+    if ($query->have_posts()) {
+        foreach ($query->posts as $post_id) {
+            // Get ACF field value for the specified field (origin or destination)
+            $field_value = get_field($field_name, $post_id);
+            
+            if (!empty($field_value)) {
+                // If it's a string, use it directly
+                if (is_string($field_value)) {
+                    $locations[$field_value] = $field_value;
+                }
+                // If it's an array (like select field with label/value)
+                elseif (is_array($field_value)) {
+                    if (isset($field_value['value']) && isset($field_value['label'])) {
+                        $locations[$field_value['value']] = $field_value['label'];
+                    } else {
+                        // Handle array of values
+                        foreach ($field_value as $value) {
+                            if (is_string($value)) {
+                                $locations[$value] = $value;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    wp_reset_postdata();
+
+    // Build options HTML
+    $options = '';
+    if (!empty($locations)) {
+        // Remove duplicates and sort alphabetically
+        $locations = array_unique($locations);
+        asort($locations);
+        foreach ($locations as $value => $label) {
+            $options .= '<option value="' . esc_attr($value) . '">' . esc_html($label) . '</option>';
+        }
+    }
+
+    return $options;
+}
+
+// AJAX Handler สำหรับค้นหาราคา
+add_action('wp_ajax_search_route_pricing', 'ajax_search_route_pricing');
+add_action('wp_ajax_nopriv_search_route_pricing', 'ajax_search_route_pricing');
+// add_action( 'init', 'ajax_search_route_pricing');
+
+function ajax_search_route_pricing() {
+    // Security check
+    if (!check_ajax_referer('search_price_nonce', 'nonce', false)) {
+        wp_send_json_error(['message' => 'Invalid security token']);
+        return;
+    }
+
+    $origin_value = sanitize_text_field($_POST['origin']);
+    $destination_value = sanitize_text_field($_POST['destination']);
+
+    //Validate input
+    if (empty($origin_value) || empty($destination_value)) {
+        wp_send_json_error(['message' => 'กรุณาเลือกต้นทางและปลายทาง']);
+        return;
+    }
+
+    $args = [
+        'post_type'      => 'package_rent',
+        'posts_per_page' => -1,
+        'meta_query'     => [
+            'relation' => 'AND',
+            [
+                'key'     => 'origin',
+                'value'   => $origin_value,
+                'compare' => 'LIKE'
+            ],
+            [
+                'key'     => 'destination',
+                'value'   => $destination_value,
+                'compare' => 'LIKE'
+            ],
+        ],
+    ];
+
+    $query = new WP_Query($args);
+    $output = '';
+    // print_r($query);
+
+    if ($query->have_posts()) {
+        $output .= '<h3 class="text-xl font-semibold text-gray-800 mb-6">ผลการค้นหา: ' . esc_html($origin_value) . ' → ' . esc_html($destination_value) . '</h3>';
+        
+        // Start single table for all results
+        $output .= '<div class="overflow-x-auto shadow-md rounded-lg">';
+        $output .= '<table class="w-full border-collapse bg-white">';
+        $output .= '<thead>';
+        $output .= '<tr class="bg-primary text-white">';
+        $output .= '<th class="p-4 text-left font-semibold border border-gray-200">เส้นทาง</th>';
+        $output .= '<th class="p-4 text-left font-semibold border border-gray-200">ประเภทรถ</th>';
+        $output .= '<th class="p-4 text-left font-semibold border border-gray-200">ราคา</th>';
+        $output .= '<th class="p-4 text-left font-semibold border border-gray-200">เลือก</th>';
+        $output .= '</tr>';
+        $output .= '</thead>';
+        $output .= '<tbody>';
+
+        while ($query->have_posts()) {
+            $query->the_post();
+
+            $title = get_the_title();
+            $car_prices = get_field('price');
+            $origin = get_field('origin');
+            $destination = get_field('destination');
+            $car_type = get_field('car_type');
+            $post_id = get_the_ID();
+
+            $output .= '<tr class="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-200">';
+            
+            // Route column
+            $route_display = esc_html($origin) . ' - ' . esc_html($destination);
+            $output .= '<td class="p-4 border border-gray-200 text-gray-600">' . $route_display . '</td>';
+
+            // Car type column
+            $type = esc_html($car_type ?? ($title ?: 'ไม่ระบุ'));
+            $output .= '<td class="p-4 border border-gray-200 font-medium text-gray-800">' . $type . '</td>';
+            
+            // Price column
+            $price_display = $car_prices ? esc_html($car_prices) . ' บาท' : 'ไม่ระบุราคา';
+            $output .= '<td class="p-4 border border-gray-200 font-semibold text-primary">' . $price_display . '</td>';
+        
+            // Radio button column
+            $output .= '<td class="p-4 text-center border border-gray-200">';
+            $output .= '<input type="radio" name="selected_package" value="' . $post_id . '" class="w-5 h-5 text-primary bg-gray-100 border-gray-300 focus:ring-primary focus:ring-2">';
+            $output .= '</td>';
+            
+            $output .= '</tr>';
+        }
+        
+        $output .= '</tbody>';
+        $output .= '</table>';
+        $output .= '</div>';
+        
+        // Add single action button
+        $output .= '<div class="mt-6 text-center">';
+        $output .= '<button type="button" id="select-package-btn" onclick="processSelectedPackage()" class="bg-primary hover:bg-primary text-white font-semibold py-4 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-lg flex items-center justify-center gap-2 mx-auto">';
+        $output .= '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">';
+        $output .= '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>';
+        $output .= '</svg>';
+        $output .= 'ดำเนินการต่อ';
+        $output .= '</button>';
+        $output .= '</div>';
+        // Add JavaScript function
+        $output .= '<script>
+        function processSelectedPackage() {
+            const selectedRadio = document.querySelector("input[name=\'selected_package\']:checked");
+            if (!selectedRadio) {
+                alert("กรุณาเลือกรายการที่ต้องการ");
+                return;
+            }
+            // เก็บข้อมูล row ที่เลือก
+            const row = selectedRadio.closest("tr");
+            const route = row.querySelector("td:nth-child(1)").innerText.trim();
+            const carType = row.querySelector("td:nth-child(2)").innerText.trim();
+            const price = row.querySelector("td:nth-child(3)").innerText.trim();
+            const packageId = selectedRadio.value;
+
+            // หา form หลัก
+            const bookingForm = document.getElementById("rentcar-booking-form");
+            if (!bookingForm) {
+                alert("ไม่พบฟอร์มจอง");
+                return;
+            }
+
+            // ลบ input hidden เก่า
+            bookingForm.querySelectorAll(".selected-package-hidden").forEach(e => e.remove());
+
+            // สร้าง input hidden ใหม่ (ใช้ชื่อที่ตรงกับ ACF field structure)
+            const fields = [
+                {name: "selected_package_id", value: packageId},
+                {name: "selected_package_route", value: route},
+                {name: "selected_package_car_type", value: carType},
+                {name: "selected_package_price", value: price}
+            ];
+            fields.forEach(f => {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = f.name;
+                input.value = f.value;
+                input.className = "selected-package-hidden";
+                bookingForm.appendChild(input);
+            });
+            
+            // ตั้งค่า dropdown และปิดการแก้ไข
+            const departStartSelect = document.getElementById("departStart");
+            const departHuaHinSelect = document.getElementById("departHuaHin");
+
+            // แยกเป็นต้นทางและปลายทางด้วย →
+            const [startPoint, endPoint] = route.split(" - ").map(part => part.trim());
+    
+
+            // ตั้งค่าให้ dropdown ต้นทาง (departStartSelect)
+            if (departStartSelect && startPoint) {
+                setSelectByText(departStartSelect, startPoint);
+                departStartSelect.disabled = true;
+            }
+
+            // ตั้งค่าให้ dropdown ปลายทาง (departHuaHinSelect)
+            if (departHuaHinSelect && endPoint) {
+                setSelectByText(departHuaHinSelect, endPoint);
+                departHuaHinSelect.disabled = true;
+            }
+
+            // แสดงผลใน result-choose
+            const resultChoose = document.getElementById("result-choose");
+            resultChoose.innerHTML = `
+                <div class="max-w-7xl mx-auto bg-green-50 border border-green-200 rounded-xl shadow-md p-4 sm:p-6 md:p-8 mt-4">
+                    <div class="flex items-center gap-3 mb-4">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h3 class="text-xl font-semibold text-green-800">แพ็คเกจที่เลือก</h3>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <span class="text-sm text-gray-600 block mb-1">เส้นทาง</span>
+                            <span class="font-semibold text-gray-800">${route}</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <span class="text-sm text-gray-600 block mb-1">ประเภทรถ</span>
+                            <span class="font-semibold text-gray-800">${carType}</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <span class="text-sm text-gray-600 block mb-1">ราคา</span>
+                            <span class="font-semibold text-primary text-lg">${price}</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button type="button" onclick="clearSelectedPackage()" class="text-red-600 hover:text-red-800 text-sm font-medium">
+                            ยกเลิกการเลือก
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // อัปเดตราคาใน summary
+            updatePriceSummary(price);
+
+            // ปิด popup
+            document.getElementById("search-results").classList.add("hidden");
+            document.getElementById("results-content").innerHTML = "";
+        }
+
+        function setSelectByText(selectElement, text) {
+            // ลบช่องว่างหน้า-หลังของ text ที่ต้องการ
+            const trimmedText = text.trim();
+
+            // ค้นหา option ที่มี text ตรงกัน
+            for (let option of selectElement.options) {
+                if (option.text.trim() === trimmedText) {
+                    selectElement.value = option.value;
+                    return; // ถ้าเจอ ตั้งค่าแล้วจบ
+                }
+            }
+
+            // ถ้าไม่เจอ: สร้าง option ใหม่
+            const newOption = document.createElement("option");
+            newOption.text = trimmedText;
+            newOption.value = trimmedText; // หรือจะใช้ ID พิเศษก็ได้ เช่น "auto-" + Date.now()
+            selectElement.add(newOption);
+
+            // ตั้งค่าให้ dropdown ชี้ไปที่ option ใหม่นี้
+            selectElement.value = trimmedText;
+
+            console.log(`Option created: ${trimmedText}`);
+        }
+        
+        function clearSelectedPackage() {
+            // ลบ input hidden
+            const bookingForm = document.getElementById("rentcar-booking-form");
+            if (bookingForm) {
+                bookingForm.querySelectorAll(".selected-package-hidden").forEach(e => e.remove());
+            }
+            
+            // ลบการแสดงผล
+            document.getElementById("result-choose").innerHTML = "";
+            
+            // รีเซ็ตราคา
+            updatePriceSummary("0 บาท");
+        }
+        
+        function updatePriceSummary(price) {
+            // อัปเดตราคาใน summary section
+            const totalPriceEl = document.getElementById("summary-total-price");
+            const grandTotalEl = document.getElementById("summary-grand-total");
+            
+            if (totalPriceEl) totalPriceEl.textContent = price;
+            if (grandTotalEl) grandTotalEl.textContent = price;
+        }
+        </script>';
+        wp_reset_postdata();
+    } else {
+        $output = '<div class="text-center py-8"><p class="text-gray-500 text-lg">ไม่พบบริการสำหรับเส้นทางนี้</p></div>';
+    }
+
+    echo $output;
+    wp_die();
+}
