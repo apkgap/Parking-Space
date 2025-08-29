@@ -7,11 +7,11 @@ function render_route_search_shortcode() {
     
     ob_start();
     ?>
-        <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-md sticky top-8 p-4 sm:p-6 md:p-8 mb-[2em]">
+        <div class="car-route-search-component max-w-7xl mx-auto bg-white rounded-xl shadow-md sticky top-8 p-4 sm:p-6 md:p-8 mb-[2em]">
             <h2 class="text-center text-2xl font-semibold text-gray-800 mb-8">ค้นหาบริการรถเช่า</h2>
 
             <form method="POST" action="" id="route-search-form" class="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0 items-end mb-6">
-                <div class="flex flex-col flex-1">
+                <div class="flex flex-col flex-1 w-full">
                     <label for="origin" class="block mb-2 font-semibold text-gray-700">
                         <strong>ต้นทาง:</strong>
                     </label>
@@ -20,7 +20,7 @@ function render_route_search_shortcode() {
                         <?php echo get_location_options('origin'); ?>
                     </select>
                 </div>
-                <div class="flex flex-col flex-1">
+                <div class="flex flex-col flex-1 w-full">
                     <label for="destination" class="block mb-2 font-semibold text-gray-700">
                         <strong>ปลายทาง:</strong>
                     </label>
@@ -29,7 +29,7 @@ function render_route_search_shortcode() {
                         <?php echo get_location_options('destination'); ?>
                     </select>
                 </div>
-                <div class="flex-1">
+                <div class="flex-1 w-full">
                     <button id="carrent-search-btn" type="submit" class="w-full bg-primary hover:bg-primary text-white font-semibold py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] text-lg flex items-center justify-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -40,15 +40,15 @@ function render_route_search_shortcode() {
             </form>
         </div>
 
-        <div id="search-results" class="fixed inset-0 z-50 flex items-center justify-center bg-tranparent bg-opacity-40 z-999 hidden">
+        <div id="search-results" class="car-route-search-component fixed inset-0 z-50 flex items-center justify-center bg-tranparent bg-opacity-40 z-999 hidden">
             <div class="blur"></div>
-            <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 relative">
+            <div id="search-results-modal" class="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 relative">
                 <button type="button" onclick="closeSearchResults()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-2xl font-bold"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
                 <div id="results-content"></div>
             </div>
         </div>
 
-        <div id="result-choose" class="result-choose mb-[2em]">
+        <div id="result-choose" class="car-route-search-component result-choose mb-[2em]">
 
         </div>
         <script>
@@ -190,17 +190,17 @@ function ajax_search_route_pricing() {
         $output .= '<h3 class="text-xl font-semibold text-gray-800 mb-6">ผลการค้นหา: ' . esc_html($origin_value) . ' → ' . esc_html($destination_value) . '</h3>';
         
         // Start single table for all results
-        $output .= '<div class="overflow-x-auto shadow-md rounded-lg">';
-        $output .= '<table class="w-full border-collapse bg-white">';
-        $output .= '<thead>';
-        $output .= '<tr class="bg-primary text-white">';
-        $output .= '<th class="p-4 text-left font-semibold border border-gray-200">เส้นทาง</th>';
-        $output .= '<th class="p-4 text-left font-semibold border border-gray-200">ประเภทรถ</th>';
-        $output .= '<th class="p-4 text-left font-semibold border border-gray-200">ราคา</th>';
-        $output .= '<th class="p-4 text-left font-semibold border border-gray-200">เลือก</th>';
+        $output .= '<div class="car-route-search-component overflow-x-auto shadow-md rounded-lg h-[60vh] overflow-y-auto">';
+        $output .= '<table class="w-full border-collapse bg-white text-left">'; // Responsive table
+        $output .= '<thead class="bg-primary text-white hidden md:table-header-group">'; // Hide on mobile
+        $output .= '<tr>';
+        $output .= '<th class="p-4 font-semibold">เส้นทาง</th>';
+        $output .= '<th class="p-4 font-semibold">ประเภทรถ</th>';
+        $output .= '<th class="p-4 font-semibold">ราคา</th>';
+        $output .= '<th class="p-4 font-semibold text-center">เลือก</th>';
         $output .= '</tr>';
         $output .= '</thead>';
-        $output .= '<tbody>';
+        $output .= '<tbody class="divide-y divide-gray-200">'; // Rows as blocks on mobile
 
         while ($query->have_posts()) {
             $query->the_post();
@@ -212,22 +212,22 @@ function ajax_search_route_pricing() {
             $car_type = get_field('car_type');
             $post_id = get_the_ID();
 
-            $output .= '<tr class="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-200">';
+            $output .= '<tr class="block md:table-row hover:bg-gray-50">';
             
             // Route column
             $route_display = esc_html($origin) . ' - ' . esc_html($destination);
-            $output .= '<td class="p-4 border border-gray-200 text-gray-600">' . $route_display . '</td>';
+            $output .= '<td class="p-4 flex justify-between items-center md:table-cell" data-label="เส้นทาง">' . $route_display . '</td>';
 
             // Car type column
             $type = esc_html($car_type ?? ($title ?: 'ไม่ระบุ'));
-            $output .= '<td class="p-4 border border-gray-200 font-medium text-gray-800">' . $type . '</td>';
+            $output .= '<td class="p-4 flex justify-between items-center md:table-cell font-medium" data-label="ประเภทรถ">' . $type . '</td>';
             
             // Price column
             $price_display = $car_prices ? esc_html($car_prices) . ' บาท' : 'ไม่ระบุราคา';
-            $output .= '<td class="p-4 border border-gray-200 font-semibold text-primary">' . $price_display . '</td>';
+            $output .= '<td class="p-4 flex justify-between items-center md:table-cell font-semibold text-primary" data-label="ราคา">' . $price_display . '</td>';
         
             // Radio button column
-            $output .= '<td class="p-4 text-center border border-gray-200">';
+            $output .= '<td class="p-4 flex justify-end items-center md:table-cell md:text-center" data-label="เลือก">';
             $output .= '<input type="radio" name="selected_package" value="' . $post_id . '" class="w-5 h-5 text-primary bg-gray-100 border-gray-300 focus:ring-primary focus:ring-2">';
             $output .= '</td>';
             
@@ -237,6 +237,17 @@ function ajax_search_route_pricing() {
         $output .= '</tbody>';
         $output .= '</table>';
         $output .= '</div>';
+
+        // Add CSS for mobile view
+        $output .= '<style>
+        @media (max-width: 767px) {
+            td[data-label]::before {
+                content: attr(data-label);
+                font-weight: 600;
+                margin-right: 1rem;
+            }
+        }
+        </style>';
         
         // Add single action button
         $output .= '<div class="mt-6 text-center">';
@@ -291,6 +302,9 @@ function ajax_search_route_pricing() {
             // ตั้งค่า dropdown และปิดการแก้ไข
             const departStartSelect = document.getElementById("departStart");
             const departHuaHinSelect = document.getElementById("departHuaHin");
+            const returnStartSelect = document.getElementById("returnStart");
+            const returnHuaHinSelect = document.getElementById("returnHuaHin");
+            const carTypeSelect = document.getElementById("carTypeSelect");
 
             // แยกเป็นต้นทางและปลายทางด้วย →
             const [startPoint, endPoint] = route.split(" - ").map(part => part.trim());
@@ -308,10 +322,27 @@ function ajax_search_route_pricing() {
                 departHuaHinSelect.disabled = true;
             }
 
+            // ตั้งค่าให้ dropdown ขากลับ (สลับกัน)
+            if (returnStartSelect && endPoint) {
+                setSelectByText(returnStartSelect, endPoint);
+                returnStartSelect.disabled = true;
+            }
+
+            if (returnHuaHinSelect && startPoint) {
+                setSelectByText(returnHuaHinSelect, startPoint);
+                returnHuaHinSelect.disabled = true;
+            }
+
+            // ตั้งค่าประเภทรถที่เลือก
+            if (carTypeSelect && carType) {
+                setSelectByText(carTypeSelect, carType);
+                carTypeSelect.disabled = true;
+            }
+
             // แสดงผลใน result-choose
             const resultChoose = document.getElementById("result-choose");
             resultChoose.innerHTML = `
-                <div class="max-w-7xl mx-auto bg-green-50 border border-green-200 rounded-xl shadow-md p-4 sm:p-6 md:p-8 mt-4">
+                <div class="car-route-search-component max-w-7xl mx-auto bg-green-50 border border-green-200 rounded-xl shadow-md p-4 sm:p-6 md:p-8 mt-4">
                     <div class="flex items-center gap-3 mb-4">
                         <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>

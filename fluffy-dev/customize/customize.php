@@ -926,7 +926,7 @@ add_action('init', function () {
 });
 
 // ========= 2) ฟังก์ชันสร้าง QR เป็น SVG ด้วย endroid/qr-code =========
-function generate_booking_qr_code_svg_both( $booking_id, $order_code ) {
+function generate_booking_qr_code_png($booking_id, $order_code) {
     // ensure autoload
     if ( ! class_exists('\Endroid\QrCode\Builder\Builder') ) {
         $autoload = trailingslashit( WP_PLUGIN_DIR ) . 'yp-qrcode/vendor/autoload.php';
@@ -958,35 +958,26 @@ function generate_booking_qr_code_svg_both( $booking_id, $order_code ) {
         return false;
     }
 
-    $filename   = 'qr_' . sanitize_file_name( (string) $order_code ) . '.svg';
+    $filename   = 'qr_' . sanitize_file_name( (string) $order_code ) . '.png';
     $file_path  = trailingslashit( $dir_path ) . $filename;
     $public_url = trailingslashit( $dir_url ) . $filename;
 
     try {
         $result = \Endroid\QrCode\Builder\Builder::create()
-            ->writer(new \Endroid\QrCode\Writer\SvgWriter())
+            ->writer(new \Endroid\QrCode\Writer\PngWriter())
             ->data($booking_url)
             ->size(300)
             ->margin(10)
             ->build();
 
-        $svg = $result->getString(); // <-- SVG code ตรง ๆ
-        
-        // Ensure viewBox attribute is present for proper scaling
-        if (strpos($svg, 'viewBox') === false) {
-            $svg = preg_replace('/<svg/', '<svg viewBox="0 0 300 300"', $svg, 1);
-        }
-
-        // เขียนไฟล์ (เผื่ออยากใช้เป็นไฟล์ด้วย)
-        file_put_contents($file_path, $svg);
+        // Save the QR code to a file
+        $result->saveToFile($file_path);
         @chmod($file_path, 0644);
 
-        return [
-            'url' => $public_url,
-            'svg' => $svg,
-        ];
+        // Return the public URL of the QR code
+        return $public_url;
     } catch (\Throwable $e) {
-        error_log('QR SVG generation failed: ' . $e->getMessage());
+        error_log('QR PNG generation failed: ' . $e->getMessage());
         return false;
     }
 }
@@ -1021,18 +1012,10 @@ function insert_parking_booking() {
     // Save the order code to an ACF field
     update_field('order_code', $order_code, $post_id);
 
-    $qr = generate_booking_qr_code_svg_both( $post_id, $order_code );
+    $qr = generate_booking_qr_code_png( $post_id, $order_code );
 
     // Save ACF ถ้าสำเร็จ
-    if ( $qr && is_array($qr) ) {
-        // URL ของไฟล์ .svg
-        update_field('qr_code_url', esc_url_raw($qr['url']), $post_id);
-
-
-        // โค้ด SVG ตรง ๆ (เก็บใน ACF field แบบ Textarea)
-        // ปล่อย raw ไว้ในเมต้า แล้วค่อยกรองตอนแสดงผลหน้าเว็บ
-        update_field('qrcode_svg', $qr['svg'], $post_id);
-    }
+        update_field('qr_code_url', esc_url_raw($qr), $post_id);
 
     // บันทึกฟิลด์ ACF หลัก
     update_field('start_date', $data['startDate'], $post_id);
@@ -1195,8 +1178,7 @@ function insert_parking_booking() {
         'message' => 'บันทึกสำเร็จ',
         'post_id' => $post_id,
         'order_code' => $order_code,
-        'qrcode_svg' => $qr['svg'],
-        'qr_code_url' => $qr['url'],
+        'qr_code_url' => esc_url_raw($qr),
         'input_data' => $data // <<-- ส่งข้อมูล input กลับไป
     ]);
 }
@@ -1299,11 +1281,11 @@ function generate_parking_booking_email_template($booking_data, $order_code, $po
           </tr>
 
           <!-- Title -->
-          <tr>
+           <tr>
             <td align="center" class="px-24 py-32" style="padding:28px 24px;">
-              <img src="' . $site_url . '/wp-content/uploads/2024/05/logo-OK-Parking.svg" width="150" height="150" alt="Success" style="display:block; margin:0 auto 12px; border-radius:32px;">
-              <div style="font-size:22px; font-weight:bold; color:#333;">ขอบคุณสำหรับการจองของคุณ!</div>
-              <div style="font-size:13px; color:#666;">เราได้รับการจองของคุณแล้ว</div>
+              <img src="' . get_stylesheet_directory_uri() . '/customize/img/logo-okpark.jpg" width="150" height="150" alt="Success" style="display:block; margin:0 auto 12px; border-radius:32px;">
+              <div style="font-size:22px; font-weight:bold; color:#333;">ขอบคุณสำหรับคำสั่งซื้อของคุณ!</div>
+              <div style="font-size:13px; color:#666;">เราได้รับคำสั่งซื้อแล้วและกำลังจัดส่งให้คุณ</div>
             </td>
           </tr>
 
@@ -1383,7 +1365,7 @@ function generate_parking_booking_email_template($booking_data, $order_code, $po
         foreach ($booking_data['selectedParkingSpaces'] as $index => $space) {
             $license_plate = isset($space['licensePlate']) ? esc_html($space['licensePlate']) : '';
             $other_type_car = isset($space['otherTypeCar']) ? esc_html($space['otherTypeCar']) : '';
-            $parking_slot_id = isset($space['parking_id']) ? esc_html($space['parking_id']) : '';
+            $parking_slot_id = isset($space['id']) ? esc_html($space['id']) : '';
             
             $html .= '<div style="font-size:13px; color:#555; line-height:1.5; margin-top:10px; padding-top:10px; border-top:1px solid #eee;">
                       รถ #' . ($index + 1) . '<br>
@@ -1391,19 +1373,6 @@ function generate_parking_booking_email_template($booking_data, $order_code, $po
                       ประเภทรถ: ' . $other_type_car . '<br>
                       ช่องจอด: ' . $parking_slot_id . '
                     </div>';
-        }
-        
-        // Add QR code if available
-        $qr_code_url = get_field('qr_code_url', $post_id);
-        
-        if ($qr_code_url) {
-            $html .= '<div style="margin-top:20px; text-align:center;">
-                        <div style="font-weight:bold; color:#111; margin-bottom:10px;">QR Code สำหรับการเข้า-ออก</div>
-                        <div style="display:inline-block; padding:15px; background:#ffffff; border:1px solid #e5e7eb; border-radius:8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                          <img src="' . esc_url($qr_code_url) . '" alt="QR Code" style="width:200px; height:200px;">
-                        </div>
-                        <div style="font-size:12px; color:#666; margin-top:8px;">กรุณาแสดง QR Code นี้ ณ จุดเข้า-ออก</div>
-                      </div>';
         }
         
         $html .= '                  </td>
@@ -1944,4 +1913,10 @@ function update_theme_settings_data( $request ) {
         'data' => get_theme_settings_data( $request ),
     ];
 }
+
+
+
+
+
 ?>
+

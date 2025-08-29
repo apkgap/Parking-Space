@@ -181,7 +181,6 @@ jQuery(document).ready(function($) {
             '#departTime': 'Departure time is required',
             '#carTypeSelect': 'Car type is required',
             '#adultCount': 'Number of adults is required',
-            '#childCount': 'Number of children is required',
             '#arrivalFlightNo': 'Arrival flight number is required',
             '#arrivalFlightTime': 'Arrival flight time is required',
             '#departureFlightNo': 'Departure flight number is required',
@@ -232,11 +231,6 @@ jQuery(document).ready(function($) {
             errors.push('จำนวนผู้โดยสาร (ผู้ใหญ่) ต้องอยู่ระหว่าง 0-10 คน');
             isValid = false;
         }
-        if (!validatePassengerCount($('#childCount'))) {
-            errors.push('จำนวนผู้โดยสาร (เด็ก) ต้องอยู่ระหว่าง 0-10 คน');
-            isValid = false;
-        }
-
         // Show validation errors
         if (!isValid) {
             // showFieldError(errors.join('<br>'));
@@ -382,13 +376,13 @@ jQuery(document).ready(function($) {
         }
     });
 
-    $('#adultCount, #childCount').on('input blur', function() {
+    $('#adultCount').on('input blur', function() {
         const val = parseInt($(this).val(), 10);
         if (isNaN(val) || val < 1 || val > 10) {
             $(this).addClass('error');
             showFieldError($(this), $(this).attr('id') === 'adultCount'
-                ? 'จำนวนผู้โดยสาร (ผู้ใหญ่) ต้องอยู่ระหว่าง 0-10 คน'
-                : 'จำนวนผู้โดยสาร (เด็ก) ต้องอยู่ระหว่าง 0-10 คน'
+                ? 'จำนวนผู้โดยสาร (ผู้ใหญ่) ต้องอยู่ระหว่าง 1-10 คน'
+                : 'จำนวนผู้โดยสาร (เด็ก) ต้องอยู่ระหว่าง1-10 คน'
             );
         } else {
             $(this).removeClass('error');
@@ -396,17 +390,17 @@ jQuery(document).ready(function($) {
         }
     });
 
-    $('#adultCount, #childCount').on('input blur', function() {
+    $('#adultCount').on('input blur', function() {
         validatePassengerCount($(this));
     });
 
-    $('#adultCount, #childCount').on('input blur', function() {
+    $('#adultCount').on('input blur', function() {
         const val = parseInt($(this).val(), 10);
         if (isNaN(val) || val < 1 || val > 10) {
             $(this).addClass('error');
             showFieldError($(this), $(this).attr('id') === 'adultCount'
-                ? 'จำนวนผู้โดยสาร (ผู้ใหญ่) ต้องอยู่ระหว่าง 0-10 คน'
-                : 'จำนวนผู้โดยสาร (เด็ก) ต้องอยู่ระหว่าง 0-10 คน'
+                ? 'จำนวนผู้โดยสาร (ผู้ใหญ่) ต้องอยู่ระหว่าง 1-10 คน'
+                : 'จำนวนผู้โดยสาร (เด็ก) ต้องอยู่ระหว่าง 1-10 คน'
             );
         } else {
             $(this).removeClass('error');

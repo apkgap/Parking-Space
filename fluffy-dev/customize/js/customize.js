@@ -67,8 +67,9 @@ jQuery(document).ready(function($) {
 
     /* select funciton */
 
-    const populateCarTypes = async (selectId, apiUrl) => {
+    const populateCarTypes = async (selectId, apiUrl, text) => {
         const selectElement = document.getElementById(selectId);
+        const defaultText = text || 'เลือกประเภท';
 
         if (!selectElement) {
             // console.error(`Error: <select> element with ID '${selectId}' not found.`);
@@ -92,7 +93,7 @@ jQuery(document).ready(function($) {
             data.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
 
             // Clear existing options and add a default option
-            selectElement.innerHTML = '<option value="">เลือกประเภท</option>';
+            selectElement.innerHTML = `<option value="">${defaultText}</option>`;
 
             // Populate the select element with sorted options
             data.forEach(vehicle => {
@@ -114,9 +115,11 @@ jQuery(document).ready(function($) {
     // Example usage when the DOM is fully loaded
         const currentOrigin = window.location.origin;
         populateCarTypes('carType1', `${currentOrigin}/wp-json/custom/v1/vehicle_type`);
-        populateCarTypes('returnStart', `${currentOrigin}/wp-json/carrent/car-locations`);
-        populateCarTypes('departHuaHin', `${currentOrigin}/wp-json/carrent/car-locations`);
-        populateCarTypes('location1', `${currentOrigin}/wp-json/custom/v1/taxonomy_terms/location`);
+        populateCarTypes('returnStart', `${currentOrigin}/wp-json/carrent/car-locations`, 'เลือกสถานที่');
+        populateCarTypes('departHuaHin', `${currentOrigin}/wp-json/carrent/car-locations`, 'เลือกสถานที่');
+        populateCarTypes('returnStart', `${currentOrigin}/wp-json/carrent/car-locations`, 'เลือกสถานที่');
+        populateCarTypes('returnHuaHin', `${currentOrigin}/wp-json/carrent/car-locations`, 'เลือกสถานที่');
+        populateCarTypes('location1', `${currentOrigin}/wp-json/custom/v1/taxonomy_terms/location`, 'เลือกสถานที่');
 
 });
 

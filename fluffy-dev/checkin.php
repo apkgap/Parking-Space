@@ -120,7 +120,7 @@ get_header(); // Include theme header
                         $start_time = get_field('start_time');
                         $end_date = get_field('end_date');
                         $end_time = get_field('end_time');
-                        $qrcode_svg = get_field('qrcode_svg');
+                        $qr_code_url = get_field('qr_code_url');
                         $booking_status = get_field('tracking_check_status');                
                         $check_in_time = get_field('tracking_check_in');
                         $check_out_time = get_field('tracking_check_out');
@@ -198,9 +198,9 @@ get_header(); // Include theme header
 
                                 <div class="details-qrcode-wrapper flex justify-center mb-8">
                                     <div class="details-qrcode-container p-4 bg-white border-4 border-primary rounded-2xl shadow-lg w-full max-w-[280px]">
-                                        <?php if ($qrcode_svg) : ?>
+                                        <?php if ($qr_code_url) : ?>
                                             <div class="qrcode-image-wrapper aspect-square box-qrcode">
-                                                <?php echo str_replace('<svg', '<svg class="w-full h-full"', $qrcode_svg); ?>
+                                                <img src="<?php echo esc_url($qr_code_url); ?>" alt="QR Code" style="width:200px; height:200px;">
                                             </div>
                                         <?php else : ?>
                                             <div class="qrcode-placeholder aspect-square flex items-center justify-center bg-base-200 rounded-lg">

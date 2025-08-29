@@ -76,7 +76,7 @@ get_header();
                                 <div class="input-group flex-1 mb-4 md:mb-0">
                                     <label for="location1" class="text-sm sm:text-base lg:text-[16px]">สถานที่ (Location)<span class="text-red-500 pr-2">*</span></label>
                                     <select id="location1"  name="location1" class="input-field bg-white car-type-select" >
-                                        <optionvalue="" disabled selected>เลือกสถานที่</optionvalue=>
+                                        <optionvalue="" disabled selected>เลือกสถานที่</option>
                                         <option value="SuvarnabhumiAirport">สนามบินสุวรรณภูมิ</option>
                                         <option value="DonMueangAirport">สนามบินดอนเมือง</option>
                                     </select>

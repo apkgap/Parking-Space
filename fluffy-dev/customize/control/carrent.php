@@ -421,7 +421,7 @@ function generate_car_rental_email_template($fields, $booking_ref, $post_id) {
           <!-- Title -->
           <tr>
             <td align="center" class="px-24 py-32" style="padding:28px 24px;">
-              <img src="' . $site_url . '/wp-content/uploads/2024/05/logo-OK-Parking.svg" width="150" height="150" alt="Success" style="display:block; margin:0 auto 12px; border-radius:32px;">
+              <img src="' . get_stylesheet_directory_uri() . '/customize/img/logo-okpark.jpg" width="150" height="150" alt="Success" style="display:block; margin:0 auto 12px; border-radius:32px;">
               <div style="font-size:22px; font-weight:bold; color:#333;">ขอบคุณสำหรับคำสั่งซื้อของคุณ!</div>
               <div style="font-size:13px; color:#666;">เราได้รับคำสั่งซื้อแล้วและกำลังจัดส่งให้คุณ</div>
             </td>
@@ -571,10 +571,6 @@ function generate_car_rental_email_template($fields, $booking_ref, $post_id) {
             <td align="center" style="padding:24px; background:#f7f7f7;">
               <div style="font-size:12px; color:#666;">
                 <div><strong>' . $site_name . '</strong> • ' . $admin_email . '</div>
-                <div style="margin-top:8px;">
-                  <a href="' . $site_url . '/preferences" style="color:#29b2e2; text-decoration:none;">ตั้งค่าการรับอีเมล</a> • 
-                  <a href="' . $site_url . '/unsubscribe" style="color:#29b2e2; text-decoration:none;">ยกเลิกรับข่าวสาร</a>
-                </div>
               </div>
             </td>
           </tr>

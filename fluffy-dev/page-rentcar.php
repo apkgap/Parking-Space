@@ -161,7 +161,7 @@ get_header();
                             </label>
                         </div>
                         <!-- Return Trip -->
-                        <div id="return-box" class="border-t border-gray-200 pt-4 mt-4">
+                        <div id="return-box" class="return-trip-section border-t border-gray-200 pt-4 mt-4" style="display:none;">
                             <h3 class="font-semibold text-lg mb-2">เที่ยวขากลับ</h3>
                             <div class="flex flex-col md:flex-row gap-4 mb-4">
                                 <div class="flex flex-col flex-1">
@@ -234,7 +234,7 @@ get_header();
                             </div>
                         </div>
                         <div class="border-t border-gray-200 pt-4 mt-4">
-                            <h3 class="font-semibold text-lg mb-2"><span class="text-red-500 pr-2">*</span>ประเภทที่ต้องการ</h3>
+                            <h3 class="font-semibold text-lg mb-2"><span class="text-red-500 pr-2">*</span>ประเภทรถที่ต้องการ</h3>
                             <div class="mb-4">
                                 <label for="carTypeSelect" class="sr-only">Car type</label>
                                 <select
