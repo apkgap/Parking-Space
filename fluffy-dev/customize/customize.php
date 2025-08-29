@@ -1283,7 +1283,7 @@ function generate_parking_booking_email_template($booking_data, $order_code, $po
           <!-- Title -->
            <tr>
             <td align="center" class="px-24 py-32" style="padding:28px 24px;">
-              <img src="' . get_stylesheet_directory_uri() . '/customize/img/logo-okpark.jpg" width="150" height="150" alt="Success" style="display:block; margin:0 auto 12px; border-radius:32px;">
+              <img src="' . get_stylesheet_directory_uri() . '/customize/img/logo-okpark.jpg" width="60" height="60" alt="Success" style="display:block; margin:0 auto 12px; border-radius:32px;">
               <div style="font-size:22px; font-weight:bold; color:#333;">ขอบคุณสำหรับคำสั่งซื้อของคุณ!</div>
               <div style="font-size:13px; color:#666;">เราได้รับคำสั่งซื้อแล้วและกำลังจัดส่งให้คุณ</div>
             </td>
@@ -1374,6 +1374,14 @@ function generate_parking_booking_email_template($booking_data, $order_code, $po
                       ช่องจอด: ' . $parking_slot_id . '
                     </div>';
         }
+
+        $html .= '<div style="margin-top:20px; text-align:center;">
+                        <div style="font-weight:bold; color:#111; margin-bottom:10px;">QR Code สำหรับการเข้า-ออก</div>
+                        <div style="display:inline-block; padding:15px; background:#ffffff; border:1px solid #e5e7eb; border-radius:8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <img style="width:200px; height:200px;" alt="QR Code" src="' . esc_url_raw($qr) . '">
+                        </div>
+                        <div style="font-size:12px; color:#666; margin-top:8px;">กรุณาแสดง QR Code นี้ ณ จุดเข้า-ออก</div>
+                    </div>';
         
         $html .= '                  </td>
                 </tr>

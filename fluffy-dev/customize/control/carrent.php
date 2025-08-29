@@ -421,7 +421,7 @@ function generate_car_rental_email_template($fields, $booking_ref, $post_id) {
           <!-- Title -->
           <tr>
             <td align="center" class="px-24 py-32" style="padding:28px 24px;">
-              <img src="' . get_stylesheet_directory_uri() . '/customize/img/logo-okpark.jpg" width="150" height="150" alt="Success" style="display:block; margin:0 auto 12px; border-radius:32px;">
+              <img src="' . get_stylesheet_directory_uri() . '/customize/img/logo-okpark.jpg" width="60" height="60" alt="Success" style="display:block; margin:0 auto 12px; border-radius:32px;">
               <div style="font-size:22px; font-weight:bold; color:#333;">ขอบคุณสำหรับคำสั่งซื้อของคุณ!</div>
               <div style="font-size:13px; color:#666;">เราได้รับคำสั่งซื้อแล้วและกำลังจัดส่งให้คุณ</div>
             </td>
