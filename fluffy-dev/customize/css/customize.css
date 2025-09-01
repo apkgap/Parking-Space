@@ -678,6 +678,16 @@ button.loading {
 button.loading:hover {
     transform: none;
 }
+
+/* Animation for spin */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
 /* Custom sizes not in Tailwind */
  .w-30 {
      width: 7.5rem;
