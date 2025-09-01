@@ -46,7 +46,21 @@
         $result.append(html);
   
         const json = JSON.stringify(d);
-        if (which === 'dep') $depJson.val(json); else $arrJson.val(json);
+        if (which === 'dep') {
+            $depJson.val(json);
+            // Automatically populate departure time into the time input field
+            if (d.dep_scheduled) {
+                const depTime = d.dep_scheduled.split(' ')[1]; // Extract time part from datetime
+                $('#sending_flight_depart_time').val(depTime);
+            }
+        } else {
+            $arrJson.val(json);
+            // Automatically populate arrival time into the time input field
+            if (d.arr_scheduled) {
+                const arrTime = d.arr_scheduled.split(' ')[1]; // Extract time part from datetime
+                $('#sending_flight_arrival_time').val(arrTime);
+            }
+        }
       })
       .fail((xhr) => {
         const msg = xhr?.responseJSON?.data?.message || 'ไม่พบข้อมูล / เกิดข้อผิดพลาด';
