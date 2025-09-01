@@ -1,63 +1,89 @@
-<?php 
-// ===== ตั้งค่า API KEY =====
-define('AVSTACK_KEY', 'eca6a0d76e5630cebb73e589344f92ec'); // <— ใส่คีย์จริง
+<?php
+if ( ! defined('AVIATIONSTACK_KEY') ) {
+    define('AVIATIONSTACK_KEY', 'eca6a0d76e5630cebb73e589344f92ec');
+}
 
-// ===== Enqueue JS หน้าเว็บทั้งหมด หรือเลือกหน้าเองตามต้องการ =====
 add_action('wp_enqueue_scripts', function () {
-    // ถ้าต้องการจำกัดเฉพาะบางเพจ ใช้ if (is_page(123)) { ... }
-    wp_enqueue_script('flight-lookup-js', get_template_directory_uri() . '/customize/js/aviationstack/flight-lookup.js', ['jquery'], '1.0', true);
-    wp_localize_script('flight-lookup-js', 'FLIGHT_LOOKUP', [
-        'ajaxurl' => admin_url('admin-ajax.php'),
-        'nonce'   => wp_create_nonce('flight_lookup_nonce'),
+    wp_register_script('flight-search-dummy', false);
+    wp_enqueue_script('flight-search-dummy');
+
+    wp_enqueue_script(
+        'flight-lookup',
+        get_stylesheet_directory_uri() . '/customize/js/aviationstack/flight-lookup.js',
+        ['jquery', 'jquery-ui-autocomplete'],
+        '1.0.2',
+        true
+    );
+
+    wp_localize_script('flight-lookup', 'akpFlightSearch', [
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce'    => wp_create_nonce('akp_flight_nonce'),
     ]);
-    // สไตล์เล็กน้อย (optional)
-    wp_add_inline_style('wp-block-library', '.flight-card{margin:6px 0;padding:8px;border:1px solid #e5e7eb;border-radius:8px}');
 });
 
-// ===== AJAX: ดึงข้อมูลจาก aviationstack ฝั่งเซิร์ฟเวอร์ =====
-add_action('wp_ajax_flight_lookup', 'flight_lookup_ajax');
-add_action('wp_ajax_nopriv_flight_lookup', 'flight_lookup_ajax');
-function flight_lookup_ajax() {
-    check_ajax_referer('flight_lookup_nonce', 'nonce');
+add_action('wp_ajax_akp_flight_search',        'theme_flight_search_handler');
+add_action('wp_ajax_nopriv_akp_flight_search', 'theme_flight_search_handler');
 
-    $flight_iata = isset($_GET['flight']) ? sanitize_text_field($_GET['flight']) : '';
-    $flight_date = isset($_GET['date']) ? sanitize_text_field($_GET['date']) : ''; // YYYY-MM-DD (ถ้ามี)
+function theme_flight_search_handler() {
+    error_log('Flight search handler called');
+    error_log('POST data: ' . print_r($_POST, true));
+    
+    check_ajax_referer('akp_flight_nonce');
 
-    if (!$flight_iata) wp_send_json_error(['message' => 'Missing flight number']);
-    if (!preg_match('/^[A-Z0-9]{2,3}\s?[0-9]{1,4}[A-Z]?$/i', $flight_iata)) {
-        wp_send_json_error(['message' => 'รูปแบบหมายเลขเที่ยวบินไม่ถูกต้อง']);
+    $api_key = AVIATIONSTACK_KEY;
+    error_log('API Key: ' . $api_key);
+    
+    if (empty($api_key)) {
+        error_log('API key validation failed');
+        wp_send_json(['flights' => [], 'more' => false, 'error' => 'missing_api_key']);
     }
 
+    $limit  = isset($_POST['limit'])  ? min(50, max(1, (int) $_POST['limit']))  : 15;
+    $offset = isset($_POST['offset']) ? max(0, (int) $_POST['offset']) : 0;
+
     $params = [
-        'access_key'  => AVSTACK_KEY,
-        'flight_iata' => strtoupper(str_replace(' ', '', $flight_iata)),
+        'access_key' => $api_key,
+        'limit'      => $limit,
+        'offset'     => $offset,
     ];
-    if ($flight_date) $params['flight_date'] = $flight_date;
 
-    $url = 'http://api.aviationstack.com/v1/flights?' . http_build_query($params);
-    $res = wp_remote_get($url, ['timeout' => 20]);
+    foreach (['flight_iata','airline_iata','dep_iata','arr_iata','flight_date'] as $field) {
+        if (!empty($_POST[$field])) {
+            $params[$field] = sanitize_text_field( wp_unslash($_POST[$field]) );
+        }
+    }
 
-    if (is_wp_error($res)) wp_send_json_error(['message' => $res->get_error_message()]);
-    $code = wp_remote_retrieve_response_code($res);
-    $body = json_decode(wp_remote_retrieve_body($res), true);
+    $url  = 'http://api.aviationstack.com/v1/flights?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+    error_log('API URL: ' . $url);
+    
+    $resp = wp_remote_get($url, ['timeout' => 12, 'redirection' => 3]);
 
-    if ($code !== 200 || empty($body['data'])) wp_send_json_error(['message' => 'ไม่พบข้อมูลเที่ยวบิน']);
-    $best = $body['data'][0];
+    if (is_wp_error($resp)) {
+        error_log('WP Remote Error: ' . $resp->get_error_message());
+        wp_send_json(['flights' => [], 'more' => false, 'error' => 'fetch_failed']);
+    }
 
-    $out = [
-        'flight_iata'  => $best['flight']['iata'] ?? '',
-        'airline'      => $best['airline']['name'] ?? '',
-        'status'       => $best['flight_status'] ?? '',
-        'dep_airport'  => $best['departure']['airport'] ?? '',
-        'dep_iata'     => $best['departure']['iata'] ?? '',
-        'dep_scheduled'=> $best['departure']['scheduled'] ?? '',
-        'dep_terminal' => $best['departure']['terminal'] ?? '',
-        'dep_gate'     => $best['departure']['gate'] ?? '',
-        'arr_airport'  => $best['arrival']['airport'] ?? '',
-        'arr_iata'     => $best['arrival']['iata'] ?? '',
-        'arr_scheduled'=> $best['arrival']['scheduled'] ?? '',
-        'arr_terminal' => $best['arrival']['terminal'] ?? '',
-        'arr_gate'     => $best['arrival']['gate'] ?? '',
-    ];
-    wp_send_json_success($out);
+    $body = wp_remote_retrieve_body($resp);
+    error_log('API Response Body: ' . $body);
+    
+    $json = json_decode($body, true);
+    if (!is_array($json)) {
+        error_log('JSON decode failed');
+        wp_send_json(['flights' => [], 'more' => false, 'error' => 'bad_json']);
+    }
+
+    $data   = isset($json['data']) && is_array($json['data']) ? $json['data'] : [];
+    $paging = isset($json['pagination']) ? $json['pagination'] : null;
+
+    error_log('Flight data count: ' . count($data));
+
+    $more = false;
+    if (is_array($paging) && isset($paging['total'],$paging['offset'],$paging['limit'])) {
+        $more = ( (int) $paging['offset'] + (int) $paging['limit'] ) < (int) $paging['total'];
+    }
+
+    wp_send_json([
+        'flights' => $data,
+        'more'    => $more,
+    ]);
 }
