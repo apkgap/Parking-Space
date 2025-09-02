@@ -1,12 +1,10 @@
-<div class="head-bar flex items-center px-4 py-3 text-gray-700 border-b border-gray-200 mb-10">
-    <h3 class="flex items-center text-2xl">
-        <!-- การจัดการที่จอดรถ: Parking icon -->
-        <svg class="w-7 h-7 mr-3" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
-        </svg>
-        การจัดการที่จอดรถ
-    </h3>
-</div>
+<?php
+$parking_icon = '<svg class="w-7 h-7 mr-3" fill="currentColor" viewBox="0 0 20 20">
+    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+</svg>';
+
+render_dashboard_header('การจัดการที่จอดรถ', $parking_icon);
+?>
 <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-3">
     <div class="flex items-center w-full md:w-auto">
         <div class="relative w-full md:w-64">
@@ -114,63 +112,17 @@
     </div>
 </div>
 
-<div class="parking-table-container w-full overflow-x-auto shadow-md rounded-lg bg-white">
-    <table class="parking-table w-full min-w-full table-auto border-collapse text-sm">
-        <thead>
-            <tr class="parking-table-head bg-primary text-white z-10">
-                <th class="parking-th px-2 py-3 text-center font-medium cursor-pointer hover:bg-primary-dark transition-colors sortable w-[12%]" data-sort="order_code">
-                    รหัสการจอง
-                    <span class="sort-indicator ml-1">
-                        <svg class="w-3 h-3 inline-block opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
-                        </svg>
-                    </span>
-                </th>
-                <th class="parking-th px-2 py-3 text-center font-medium cursor-pointer hover:bg-primary-dark transition-colors sortable w-[11%]" data-sort="fullname_park">
-                    ชื่อลูกค้า
-                    <span class="sort-indicator ml-1">
-                        <svg class="w-3 h-3 inline-block opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
-                        </svg>
-                    </span>
-                </th>
-                <th class="parking-th px-2 py-3 text-center font-medium cursor-pointer hover:bg-primary-dark transition-colors sortable w-[8%]" data-sort="location_park">
-                    สถานที่
-                    <span class="sort-indicator ml-1">
-                        <svg class="w-3 h-3 inline-block opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
-                        </svg>
-                    </span>
-                </th>
-                <th class="parking-th px-2 py-3 text-center font-medium cursor-pointer hover:bg-primary-dark transition-colors sortable w-[10%]" data-sort="start_date">
-                    วันเริ่มต้น
-                    <span class="sort-indicator ml-1">
-                        <svg class="w-3 h-3 inline-block opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
-                        </svg>
-                    </span>
-                </th>
-                <th class="parking-th px-2 py-3 text-center font-medium cursor-pointer hover:bg-primary-dark transition-colors sortable w-[11%]" data-sort="end_date">
-                    วันสิ้นสุด
-                    <span class="sort-indicator ml-1">
-                        <svg class="w-3 h-3 inline-block opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
-                        </svg>
-                    </span>
-                </th>
-                <th class="parking-th px-2 py-3 text-center font-medium w-[10%]">สถานะ</th>
-                <th class="parking-th px-2 py-3 text-center font-medium w-[7%]">บริการเสริม</th>
-                <th class="parking-th px-2 py-3 text-center font-medium w-[7%]">การจัดการ</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td colspan="9" class="text-center py-6">Loading...</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+<?php
+$parking_columns = array(
+    array('key' => 'order_code', 'label' => 'รหัสการจอง', 'sortable' => true, 'width' => '12%'),
+    array('key' => 'fullname_park', 'label' => 'ชื่อลูกค้า', 'sortable' => true, 'width' => '11%'),
+    array('key' => 'location_park', 'label' => 'สถานที่', 'sortable' => true, 'width' => '8%'),
+    array('key' => 'start_date', 'label' => 'วันเริ่มต้น', 'sortable' => true, 'width' => '10%'),
+    array('key' => 'end_date', 'label' => 'วันสิ้นสุด', 'sortable' => true, 'width' => '11%'),
+    array('key' => 'status', 'label' => 'สถานะ', 'sortable' => false, 'width' => '10%'),
+    array('key' => 'services', 'label' => 'บริการเสริม', 'sortable' => false, 'width' => '7%'),
+    array('key' => 'actions', 'label' => 'การจัดการ', 'sortable' => false, 'width' => '7%')
+);
 
-<div id="parking-pagination" class="parking-pagination-container mt-4">
-    <!-- Pagination controls will be populated by JavaScript -->
-</div>
+render_dashboard_table('parking-table', $parking_columns, array(), 'parking');
+?>

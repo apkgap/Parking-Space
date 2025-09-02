@@ -1,29 +1,10 @@
-<style>
-@media (max-width: 767px) {
-    .carrental-table td[data-label]::before {
-        content: attr(data-label);
-        font-weight: bold;
-        position: absolute;
-        left: 0.75rem; /* px-3 */
-        width: 45%;
-        padding-right: 10px;
-        white-space: nowrap;
-        text-align: left;
-    }
-    .carrental-table td {
-        padding-left: 50%;
-    }
-}
-</style>
-<div class="head-bar flex items-center px-4 py-3 text-gray-700 border-b border-gray-200 mb-10">
-    <h3 class="flex items-center text-2xl">
-        <!-- การจัดการการเช่ารถ: Car icon -->
-        <svg class="w-7 h-7 mr-3" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM2 10v5a1 1 0 001 1h1a2 2 0 104 0h4a2 2 0 104 0h1a1 1 0 001-1v-5H2z"></path>
-        </svg>
-        การจัดการการเช่ารถ
-    </h3>
-</div>
+<?php
+$carrental_icon = '<svg class="w-7 h-7 mr-3" fill="currentColor" viewBox="0 0 20 20">
+    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM2 10v5a1 1 0 001 1h1a2 2 0 104 0h4a2 2 0 104 0h1a1 1 0 001-1v-5H2z"></path>
+</svg>';
+
+render_dashboard_header('การจัดการการเช่ารถ', $carrental_icon);
+?>
 <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-3">
     <div class="flex items-center w-full md:w-auto">
         <div class="relative w-full md:w-64">

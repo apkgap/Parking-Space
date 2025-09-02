@@ -1,6 +1,34 @@
 <?php
+// Include dashboard components
+require_once get_template_directory() . '/dashboard/components/components.php';
+
 // Enqueue the driver.js script
 wp_enqueue_script('driver-js', get_template_directory_uri() . '/dashboard/driver-management/js/driver.js', array(), '1.0.0', true);
+
+// Render driver management page
+render_dashboard_page('Driver Management', function() {
+    render_dashboard_header('การจัดการคนขับ', get_dashboard_icon('user-group'), 'จัดการข้อมูลคนขับและการมอบหมายงาน');
+    
+    // Driver stats
+    $stats = [
+        ['label' => 'Total Drivers', 'value' => '45', 'icon' => get_dashboard_icon('user-group')],
+        ['label' => 'Active Today', 'value' => '32', 'icon' => get_dashboard_icon('car')],
+        ['label' => 'Available', 'value' => '18', 'icon' => get_dashboard_icon('parking')],
+        ['label' => 'On Duty', 'value' => '14', 'icon' => get_dashboard_icon('transport')]
+    ];
+    
+    render_dashboard_stats($stats);
+    
+    // Driver table
+    echo '<div class="bg-white rounded-lg shadow">';
+    echo '<div class="px-6 py-4 border-b border-gray-200">';
+    echo '<h3 class="text-lg font-medium text-gray-900">Driver List</h3>';
+    echo '</div>';
+    echo '<div class="p-6">';
+    echo '<div id="driver-table-container"><!-- Driver table will be loaded here --></div>';
+    echo '</div>';
+    echo '</div>';
+});
 ?>
 
 <div class="head-bar flex items-center px-4 py-3 text-gray-700 border-b border-gray-200 mb-10">

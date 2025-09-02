@@ -6,7 +6,7 @@
  *
  * @package fluffy
  */
-require_once get_template_directory() . '/customize/customize.php';
+require_once get_template_directory() . '/customize/customize-modular.php';
 require_once get_template_directory() . '/control/control.php';
 require_once get_template_directory() . '/dashboard/dashboard.php';
 
