@@ -273,7 +273,9 @@ get_header();
                                         <div class="input-group flex-1">
                                         <label for="sending_flight_depart" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>กรอกเที่ยวบินขาออก (Departure Flight No.)</label>
                                         <input type="text" id="sending_flight_depart" name="sending_flight_depart" class="input-field bg-white req-ocx" >
+                                        <div class="popup_data w-full hide"></div>
                                         <div class="popup_span w-full hide"></div>
+                                        <input type="hidden" id="sending_flight_depart_data" name="sending_flight_depart_data">
                                         </div>
                                         <div class="input-group flex-1">
                                         <label for="sending_flight_depart_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลาเที่ยวบินขาออก</label>
@@ -286,7 +288,9 @@ get_header();
                                         <div class="input-group flex-1">
                                         <label for="sending_flight_arrival" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>กรอกเที่ยวบินขาเข้า (Arrival Flight No.)</label>
                                         <input type="text" id="sending_flight_arrival" name="sending_flight_arrival" class="input-field bg-white req-ocx" >
+                                        <div class="popup_data w-full hide"></div>
                                         <div class="popup_span w-full hide"></div>
+                                        <input type="hidden" id="sending_flight_arrival_data" name="sending_flight_arrival_data">
                                         </div>
                                         <div class="input-group flex-1">
                                         <label for="sending_flight_arrival_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลาเที่ยวบินขาเข้า</label>
@@ -355,7 +359,9 @@ get_header();
                                         <div class="input-group flex-1">
                                         <label for="flight_depart" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>กรอกเที่ยวบินขาออก (Departure Flight No.)</label>
                                         <input type="text" id="flight_depart" name="flight_depart" class="input-field bg-white req-ocx" >
+                                        <div class="popup_data w-full hide"></div>
                                         <div class="popup_span w-full hide"></div>
+                                        <input type="hidden" id="flight_depart_data" name="flight_depart_data">
                                         </div>
                                         <div class="input-group flex-1">
                                         <label for="flight_depart_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลาเที่ยวบินขาออก</label>
@@ -368,7 +374,9 @@ get_header();
                                         <div class="input-group flex-1">
                                         <label for="flight_arrival" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>กรอกเที่ยวบินขาเข้า (Arrival Flight No.)</label>
                                         <input type="text" id="flight_arrival" name="flight_arrival" class="input-field bg-white req-ocx" >
+                                        <div class="popup_data w-full hide"></div>
                                         <div class="popup_span w-full hide"></div>
+                                        <input type="hidden" id="flight_arrival_data" name="flight_arrival_data">
                                         </div>
                                         <div class="input-group flex-1">
                                         <label for="flight_arrival_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลาเที่ยวบินขาเข้า</label>
