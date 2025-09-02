@@ -1083,14 +1083,14 @@ function initializeTimePickers() {
         { input: dom.timePicker.endInput, container: dom.timePicker.endContainer, defaultValue: '18:00', title: 'เลือกเวลาสิ้นสุด' },
 
         // Addon: sending
-        { input: dom.addon.sending.flightDepartTime, container: dom.timePicker.sendingFlightDepartContainer, title: 'เวลาออกเดินทาง (ขาไป)', defaultValue: '09:00' },
-        { input: dom.addon.sending.flightArrivalTime, container: dom.timePicker.sendingFlightArrivalContainer, title: 'เวลาเดินทางถึง (ขากลับ)', defaultValue: '12:00' },
+        // { input: dom.addon.sending.flightDepartTime, container: dom.timePicker.sendingFlightDepartContainer, title: 'เวลาออกเดินทาง (ขาไป)', defaultValue: '09:00' },
+        // { input: dom.addon.sending.flightArrivalTime, container: dom.timePicker.sendingFlightArrivalContainer, title: 'เวลาเดินทางถึง (ขากลับ)', defaultValue: '12:00' },
         { input: dom.addon.sending.pickupTime, container: dom.timePicker.sendingPickupContainer, title: 'เวลารับ', defaultValue: '07:00' },
         { input: dom.addon.sending.dropoffTime, container: dom.timePicker.sendingDropoffContainer, title: 'เวลาส่ง', defaultValue: '20:00' },
 
         // Addon: parking
-        { input: dom.addon.parking.flightDepartTime, container: dom.timePicker.parkingFlightDepartContainer, title: 'เวลาออกเดินทาง (ขาไป)', defaultValue: '09:00' },
-        { input: dom.addon.parking.flightArrivalTime, container: dom.timePicker.parkingFlightArrivalContainer, title: 'เวลาเดินทางถึง (ขากลับ)', defaultValue: '12:00' },
+        // { input: dom.addon.parking.flightDepartTime, container: dom.timePicker.parkingFlightDepartContainer, title: 'เวลาออกเดินทาง (ขาไป)', defaultValue: '09:00' },
+        // { input: dom.addon.parking.flightArrivalTime, container: dom.timePicker.parkingFlightArrivalContainer, title: 'เวลาเดินทางถึง (ขากลับ)', defaultValue: '12:00' },
         { input: dom.addon.parking.pickupTime, container: dom.timePicker.parkingPickupContainer, title: 'เวลารับ', defaultValue: '07:00' },
         { input: dom.addon.parking.dropoffTime, container: dom.timePicker.parkingDropoffContainer, title: 'เวลาส่ง', defaultValue: '20:00' }
     ];

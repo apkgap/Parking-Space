@@ -104,12 +104,6 @@
       const code = f && f.flight && f.flight.iata ? f.flight.iata.toUpperCase() : '';
       flightInput.value = code;
 
-      // เพิ่ม departure time ลงใน input field
-      const departTimeInput = document.getElementById('sending_flight_depart_time');
-      if (departTimeInput && f.departure && f.departure.scheduled) {
-        departTimeInput.value = toHHMM(f.departure.scheduled);
-      }
-
       // ถ้าต้องเก็บ JSON ทั้งก้อน ไว้ใน hidden field (ถ้าคุณมี)
       const hiddenJson = document.getElementById('sending_flight_depart_data');
       if (hiddenJson) hiddenJson.value = JSON.stringify(f);
@@ -193,12 +187,6 @@
       console.log('searchFlights called with:', q);
       console.log('akpFlightSearch object:', akpFlightSearch);
       
-      // เพิ่ม animation ตอนกำลังค้นหา
-      const searchIndicator = document.querySelector('.input_sending_flight_depart_time');
-      if (searchIndicator) {
-        searchIndicator.innerHTML = '<div class="flex items-center justify-center p-2"><div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div><span class="ml-2 text-gray-500">กำลังค้นหา...</span></div>';
-      }
-      
       try {
         const fd = new FormData();
         fd.append('action', 'akp_flight_search');
@@ -230,11 +218,6 @@
         console.error('AJAX Error:', err);
         popup.innerHTML = `<div class="p-3 text-gray-500">เกิดข้อผิดพลาดระหว่างค้นหา: ${err.message}</div>`;
         popup.classList.remove('hidden');
-      } finally {
-        // ลบ animation หลังจากค้นหาเสร็จ
-        if (searchIndicator) {
-          searchIndicator.innerHTML = '';
-        }
       }
     }
   });
