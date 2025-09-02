@@ -15,7 +15,7 @@
     }
 }
 </style>
-<div class="head-bar flex items-center px-4 py-3 text-gray-700 hover:bg-blue-500 hover:text-white active special border-b border-gray-200 mb-10">
+<div class="head-bar flex items-center px-4 py-3 text-gray-700 border-b border-gray-200 mb-10">
     <h3 class="flex items-center text-2xl">
         <!-- การจัดการการเช่ารถ: Car icon -->
         <svg class="w-7 h-7 mr-3" fill="currentColor" viewBox="0 0 20 20">

@@ -3,7 +3,7 @@
 wp_enqueue_script('transport-js', get_template_directory_uri() . '/dashboard/transport-management/js/transport.js', array(), '1.0.0', true);
 ?>
 
-<div class="head-bar flex items-center px-4 py-3 text-gray-700 hover:bg-blue-500 hover:text-white active special border-b border-gray-200 mb-10">
+<div class="head-bar flex items-center px-4 py-3 text-gray-700 border-b border-gray-200 mb-10">
     <h3 class="flex items-center text-2xl">
         <svg class="w-7 h-7 mr-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
         Transport Management

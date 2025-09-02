@@ -305,7 +305,7 @@ get_header();
                     <div class="bg-white rounded-xl shadow-md sticky top-8 p-4 sm:p-6 md:p-8">
                         <h2 class="text-2xl font-bold mb-4 text-black">ข้อมูลเที่ยวบิน</h2>
                         <div class="flex flex-col md:flex-row gap-4 mb-4">
-                            <div class="flex flex-col flex-1">
+                            <div class="flex flex-col flex-1 input-group">
                                 <label for="arrivalFlightNo" class="block text-gray-700 font-medium mb-1"><span class="text-red-500 pr-2">*</span>กรอกชื่อเที่ยวบินขาเข้า (Arrival Flight No.)</label>
                                 <input
                                     type="text"
@@ -313,7 +313,9 @@ get_header();
                                     class="input input-bordered w-full input-field h-12"
                                     placeholder="TG584"
                                 />
+                                <div class="popup_data w-full hide"></div>
                                 <div class="popup_span w-full hide"></div>
+                                <input type="hidden" id="arrivalFlightNo_data" name="arrivalFlightNo_data">
                             </div>
                             <div class="flex flex-col flex-1 relative">
                                 <label for="arrivalFlightTime" class="block text-gray-700 font-medium mb-1"><span class="text-red-500 pr-2">*</span>เวลาเที่ยวบินขาเข้า</label>
@@ -328,7 +330,7 @@ get_header();
                             </div>
                         </div>
                         <div class="flex flex-col md:flex-row gap-4 mb-4">
-                            <div class="flex flex-col flex-1 relative">
+                            <div class="flex flex-col flex-1 relative input-group">
                                 <label for="departureFlightNo" class="block text-gray-700 font-medium mb-1"><span class="text-red-500 pr-2">*</span>กรอกชื่อเที่ยวบินขาออก (Departure Flight No.)</label>
                                 <input
                                     type="text"
@@ -336,7 +338,9 @@ get_header();
                                     class="input input-bordered w-full input-field h-12"
                                     placeholder="TG642"
                                 />
+                                <div class="popup_data w-full hide"></div>
                                 <div class="popup_span w-full hide"></div>
+                                <input type="hidden" id="departureFlightNo_data" name="departureFlightNo_data">
                             </div>
                             <div class="flex flex-col flex-1 relative">
                                 <label for="departureFlightTime" class="block text-gray-700 font-medium mb-1"><span class="text-red-500 pr-2">*</span>เวลาเที่ยวบินขาออก</label>

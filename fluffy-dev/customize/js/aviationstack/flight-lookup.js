@@ -5,7 +5,9 @@
       'sending_flight_depart',
       'sending_flight_arrival',
       'flight_depart',
-      'flight_arrival'
+      'flight_arrival',
+      'arrivalFlightNo',
+      'departureFlightNo'
     ];
 
     // วนลูปสร้าง autocomplete ให้แต่ละ input
@@ -140,6 +142,10 @@
           timeFieldId = 'flight_depart_time';
         } else if (inputId === 'flight_arrival') {
           timeFieldId = 'flight_arrival_time';
+        } else if (inputId === 'arrivalFlightNo') {
+          timeFieldId = 'arrivalFlightTime';
+        } else if (inputId === 'departureFlightNo') {
+          timeFieldId = 'departureFlightTime';
         }
         
         // ถ้ามี field ของเวลา ให้กำหนดค่า
