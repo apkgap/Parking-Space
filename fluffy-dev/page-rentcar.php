@@ -286,6 +286,7 @@ get_header();
                                         <div id="childCount-display" class="quantity-display">0</div>
                                         คน
                                     </span>
+                                    <div class="popup_span w-full hide"></div>
                                 </div>
                             </div>
                             <div class="mb-4">
