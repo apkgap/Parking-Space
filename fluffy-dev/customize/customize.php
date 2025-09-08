@@ -73,7 +73,6 @@ function enqueue_customize_file() {
     wp_enqueue_script('thaidate-script', get_template_directory_uri() . '/customize/js/thai-date.js', array('jquery'), $thjs_version, true);
     wp_enqueue_style('select2-styles',  get_template_directory_uri() . '/customize/css/select2.min.css', array());  
     wp_enqueue_script('select2-script', get_template_directory_uri() . '/customize/js/select2.min.js', array('jquery'), $thjs_version, true);
-    wp_enqueue_script('space-parking-script', get_template_directory_uri() . '/customize/js/space-parking.js', array('jquery'), $space_parking_version, true);
     wp_enqueue_script('tabien-popup-script', get_template_directory_uri() . '/customize/js/tabien-popup.js', array('jquery'), $tabien_popup_version, true);
     
     // Add WordPress global variables for login check
@@ -721,11 +720,13 @@ function get_user_parking_booking_data($request) {
 }
 
 function enqueue_parking_scripts() {
-    // เปลี่ยนชื่อไฟล์ JS เป็น space-parking.js
-    wp_enqueue_script('space-parking', get_template_directory_uri() . '/customize/js/space-parking.js', array('jquery'), null, true);
+    $space_parking = get_template_directory() . '/customize/js/space-parking.js';
+    $space_parking_version = filemtime($space_parking);
+    
+    wp_enqueue_script('space-parking-script', get_template_directory_uri() . '/customize/js/space-parking.js', array('jquery'), $space_parking_version, true);
 
     // ส่งค่า ajaxurl ไปยัง JS
-    wp_localize_script('space-parking', 'ajaxurl_obj', array(
+    wp_localize_script('space-parking-script', 'ajaxurl_obj', array(
         'ajaxurl' => admin_url('admin-ajax.php')
     ));
 }
@@ -982,6 +983,134 @@ function generate_booking_qr_code_png($booking_id, $order_code) {
     }
 }
 
+function calculate_parking_price($booking_data) {
+    // Handle both old format (just days) and new format (booking data)
+    if (is_numeric($booking_data)) {
+        $days = $booking_data;
+        $total_vehicles = 1;
+    } else {
+        // Calculate days from start and end dates
+        if (empty($booking_data['startDate']) || empty($booking_data['endDate'])) {
+            return ['error' => 'ข้อมูลวันที่ไม่ครบถ้วน'];
+        }
+        
+        $start_date = new DateTime($booking_data['startDate']);
+        $end_date = new DateTime($booking_data['endDate']);
+        $interval = $start_date->diff($end_date);
+        $days = $interval->days;
+        
+        // If same day booking, count as 1 day
+        if ($days == 0) {
+            $days = 1;
+        }
+        
+        // Calculate total vehicles from vehicleTypeQuantities
+        $total_vehicles = 0;
+        if (!empty($booking_data['vehicleTypeQuantities'])) {
+            foreach ($booking_data['vehicleTypeQuantities'] as $vehicle) {
+                $total_vehicles += intval($vehicle['quantity'] ?? 0);
+            }
+        } else {
+            $total_vehicles = 1; // fallback
+        }
+    }
+
+    if ($days <= 0) {
+        return is_numeric($booking_data) ? 0 : ['error' => 'จำนวนวันไม่ถูกต้อง'];
+    }
+
+    // ดึงราคาจาก ACF (Options Page)
+    $price_1_day     = get_field('price_parking', 'option') ?: 100;
+    $price_2_3_days  = get_field('price_2_3_days', 'option') ?: 90;
+    $price_4_6_days  = get_field('price_4_6_days', 'option') ?: 80;
+    $price_7_plus    = get_field('price_7_plus_days', 'option') ?: 70;
+
+    switch (true) {
+        case ($days == 1):
+            $daily_price = $price_1_day;
+            break;
+
+        case ($days >= 2 && $days <= 3):
+            $daily_price = $price_2_3_days;
+            break;
+
+        case ($days >= 4 && $days <= 6):
+            $daily_price = $price_4_6_days;
+            break;
+
+        case ($days >= 7):
+            $daily_price = $price_7_plus;
+            break;
+
+        default:
+            $daily_price = $price_1_day; // fallback
+            break;
+    }
+
+    $price_per_car = $daily_price * $days;
+    $total_price = $price_per_car * $total_vehicles;
+    
+    // Return different formats based on input
+    if (is_numeric($booking_data)) {
+        return $total_price; // Backward compatibility
+    } else {
+        return [
+            'days' => $days,
+            'total_vehicles' => $total_vehicles,
+            'daily_price' => $daily_price,
+            'price_per_car' => $price_per_car,
+            'total_price' => $total_price
+        ];
+    }
+}
+// Add nonce for AJAX security
+function enqueue_parking_price_scripts() {
+    wp_localize_script('jquery', 'parking_nonce', array(
+        'nonce' => wp_create_nonce('parking_price_nonce')
+    ));
+}
+add_action('wp_enqueue_scripts', 'enqueue_parking_price_scripts');
+
+// AJAX endpoint for real-time price calculation
+function ajax_calculate_parking_price() {
+    // Verify nonce for security
+    if (!wp_verify_nonce($_POST['nonce'], 'parking_price_nonce')) {
+        wp_send_json_error('Security check failed');
+    }
+    
+    $data = array(
+        'startDate' => sanitize_text_field($_POST['startDate']),
+        'endDate' => sanitize_text_field($_POST['endDate']),
+        'vehicleTypeQuantities' => array()
+    );
+    
+    // Parse vehicle quantities from form data
+    if (!empty($_POST['vehicleQuantities'])) {
+        $vehicleQuantities = json_decode(stripslashes($_POST['vehicleQuantities']), true);
+        if (is_array($vehicleQuantities)) {
+            foreach ($vehicleQuantities as $vehicle) {
+                if (!empty($vehicle['type']) && !empty($vehicle['quantity'])) {
+                    $data['vehicleTypeQuantities'][] = array(
+                        'type' => sanitize_text_field($vehicle['type']),
+                        'quantity' => intval($vehicle['quantity'])
+                    );
+                }
+            }
+        }
+    }
+    
+    // Calculate pricing
+    $pricing_result = calculate_parking_price($data);
+    
+    if (isset($pricing_result['error'])) {
+        wp_send_json_error($pricing_result['error']);
+    }
+    
+    wp_send_json_success($pricing_result);
+}
+add_action('wp_ajax_calculate_parking_price', 'ajax_calculate_parking_price');
+add_action('wp_ajax_nopriv_calculate_parking_price', 'ajax_calculate_parking_price');
+
 function insert_parking_booking() {
     if (empty($_POST['bookingData'])) {
         wp_send_json_error('ไม่มีข้อมูลที่ส่งมา');
@@ -993,6 +1122,21 @@ function insert_parking_booking() {
     if (empty($data['startDate']) || empty($data['endDate'])) {
         wp_send_json_error('ข้อมูลไม่ครบถ้วน');
     }
+    
+    // Calculate pricing using the updated function
+    $pricing_result = calculate_parking_price($data);
+    if (isset($pricing_result['error'])) {
+        wp_send_json_error($pricing_result['error']);
+    }
+    
+    // Update data with calculated prices if not already provided
+    if (empty($data['pricePerCar'])) {
+        $data['pricePerCar'] = $pricing_result['price_per_car'];
+    }
+    if (empty($data['totalPrice'])) {
+        $data['totalPrice'] = $pricing_result['total_price'];
+    }
+    
     $profile = $data['profile'];
 
     // Generate a 6-digit order code

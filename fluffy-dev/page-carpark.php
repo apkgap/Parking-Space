@@ -466,7 +466,7 @@ get_header();
                             </div>
                             <div class="flex justify-between text-sm">
                               <span>จำนวนรถที่จอด</span>
-                              <span id="summary-car-qty">3 คัน</span>
+                              <span id="summary-car-qty">-</span>
                             </div>
                         </div>
                         <hr class="my-2">
@@ -475,14 +475,14 @@ get_header();
                             <div class="font-[600] text-base mb-2">รายละเอียดราคา</div>
                             <div class="flex justify-between text-sm">
                                 <span>ราคาค่าจอด</span>
-                                <span id="summary-price-per-car">300 บาท/คัน</span>
+                                <span id="summary-price-per-car">-</span>
                             </div>
                         </div>
                         <hr class="my-2">
                         <!-- รวม -->
                         <div class="flex justify-between items-center text-lg font-[600] mb-4">
                             <span>รวม</span>
-                            <span id="summary-total" class="text-primary">480 บาท</span>
+                            <span id="summary-total" class="text-primary">-</span>
                         </div>
                         <button type="submit" id="submit-btn" class="hide w-full bg-primary text-white font-[600] py-2 rounded-xl transition-colors text-base hover:opacity-70 submit-button">
                             จองทันที

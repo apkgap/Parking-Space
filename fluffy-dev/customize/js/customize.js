@@ -88,6 +88,14 @@ jQuery(document).ready(function($) {
             }
 
             const data = await response.json();
+            console.log(`API Response for ${selectId}:`, data); // Debug log
+
+            // Check if data is empty
+            if (!data || data.length === 0) {
+                selectElement.innerHTML = `<option value="">${defaultText}</option><option value="" disabled>ไม่มีข้อมูล</option>`;
+                selectElement.disabled = false;
+                return;
+            }
 
             // Sort data by vehicle title in ascending order (case-insensitive)
             data.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
@@ -106,7 +114,7 @@ jQuery(document).ready(function($) {
             selectElement.disabled = false; // Re-enable the select element
 
         } catch (error) {
-            console.error('Failed to load or process vehicle types:', error);
+            console.error(`Failed to load data for ${selectId} from ${apiUrl}:`, error);
             selectElement.innerHTML = '<option value="">Could not load data</option>';
             selectElement.disabled = true; // Keep disabled on error
         }
@@ -115,8 +123,8 @@ jQuery(document).ready(function($) {
     // Example usage when the DOM is fully loaded
         const currentOrigin = window.location.origin;
         populateCarTypes('carType1', `${currentOrigin}/wp-json/custom/v1/vehicle_type`);
-        populateCarTypes('returnStart', `${currentOrigin}/wp-json/carrent/car-locations`, 'เลือกสถานที่');
         populateCarTypes('departHuaHin', `${currentOrigin}/wp-json/carrent/car-locations`, 'เลือกสถานที่');
+        populateCarTypes('departStart', `${currentOrigin}/wp-json/carrent/car-locations`, 'เลือกสถานที่');
         populateCarTypes('returnStart', `${currentOrigin}/wp-json/carrent/car-locations`, 'เลือกสถานที่');
         populateCarTypes('returnHuaHin', `${currentOrigin}/wp-json/carrent/car-locations`, 'เลือกสถานที่');
         populateCarTypes('location1', `${currentOrigin}/wp-json/custom/v1/taxonomy_terms/location`, 'เลือกสถานที่');

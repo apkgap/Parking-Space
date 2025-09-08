@@ -673,6 +673,9 @@ $('#btn-search_all').on('click', async function() {
             showNoParkingPopup();
         }
 
+        // คำนวณและแสดงราคาหลังจากค้นหา
+        await calculateParkingPriceRealtime();
+
         // ซ่อน error message ถ้ามี
         dom.errorMessage.classList.add('hidden');
 
@@ -732,6 +735,7 @@ $('#btn-search_all').on('click', async function() {
      * @returns {void}
      */
     function addVehicleRow() {
+    console.log('addVehicleRow called, current count:', vehicleRowCount);
     vehicleRowCount++;
     const newRowHtml = `
         <div class="vehicle-row border-b border-gray-300 pb-6 mb-6">
@@ -921,8 +925,9 @@ async function handleSubmit(event) {
     reservationDetails.startDate = startDate;
     reservationDetails.endDate = endDate;
 
-    reservationDetails.pricePerCar = pricePerCar;
-    reservationDetails.totalPrice = pricePerCar * totalQty;
+    // Remove hardcoded pricing - let PHP calculate it
+    // reservationDetails.pricePerCar = pricePerCar;
+    // reservationDetails.totalPrice = pricePerCar * totalQty;
 
     // Add selectedSpaces and vehicleData to the submission
     reservationDetails.selectedParkingSpaces = selectedSpaces.map((space, index) => {
@@ -1272,22 +1277,162 @@ function showNoParkingPopup() {
     
 }
 
-let pricePerCar = 0; // เริ่มต้นเป็น 0
+// Remove hardcoded pricing - PHP will calculate it
+// let pricePerCar = 0; // เริ่มต้นเป็น 0
 
-async function fetchParkingPrice() {
-    try {
-        const response = await fetch('/wp-json/mytheme/v1/settings');
-        const data = await response.json();
-        if (data && data.price_parking) {
-            pricePerCar = parseFloat(data.price_parking) || 0;
+// async function fetchParkingPrice() {
+//     try {
+//         const response = await fetch('/wp-json/mytheme/v1/settings');
+//         const data = await response.json();
+//         if (data && data.price_parking) {
+//             pricePerCar = parseFloat(data.price_parking) || 0;
+//         }
+//         updateSummaryBox();
+//     } catch (e) {
+//         pricePerCar = 0;
+//         updateSummaryBox();
+//     }
+// }
+// Real-time price calculation function
+async function calculateParkingPriceRealtime() {
+    const startDate = $('#startDate').val();
+    const endDate = $('#endDate').val();
+    
+    // Check if required fields are filled
+    if (!startDate || !endDate) {
+        updateSummaryBox(); // Show default message
+        return;
+    }
+    
+    // Collect vehicle quantities
+    const vehicleQuantities = [];
+    const vehicleRows = document.querySelectorAll('.vehicle-row');
+    
+    vehicleRows.forEach(row => {
+        const carTypeSelect = row.querySelector('.car-type-select');
+        const quantityInput = row.querySelector('.quantity-input');
+        const otherCarTypeInput = row.querySelector('.other-car-type-input input');
+        
+        if (carTypeSelect && quantityInput) {
+            let carType = carTypeSelect.value;
+            if (carType === '1236' && otherCarTypeInput) {
+                carType = otherCarTypeInput.value.trim();
+            }
+            const quantity = parseInt(quantityInput.value) || 0;
+            
+            if (carType && quantity > 0) {
+                vehicleQuantities.push({
+                    type: carType,
+                    quantity: quantity
+                });
+            }
         }
+    });
+    
+    // If no vehicles selected, show default message
+    if (vehicleQuantities.length === 0) {
         updateSummaryBox();
-    } catch (e) {
-        pricePerCar = 0;
-        updateSummaryBox();
+        return;
+    }
+    
+    try {
+        const response = await $.post(ajaxurl_obj.ajaxurl, {
+            action: 'calculate_parking_price',
+            nonce: parking_nonce.nonce,
+            startDate: parseThaiDateToISO(startDate),
+            endDate: parseThaiDateToISO(endDate),
+            vehicleQuantities: JSON.stringify(vehicleQuantities)
+        });
+        
+        if (response.success) {
+            const pricing = response.data;
+            updateSummaryBoxWithPricing(pricing);
+        } else {
+            console.error('Price calculation error:', response.data);
+            updateSummaryBox(); // Show default message on error
+        }
+    } catch (error) {
+        console.error('AJAX error:', error);
+        updateSummaryBox(); // Show default message on error
     }
 }
-fetchParkingPrice();
+
+// Updated summary box function with pricing
+function updateSummaryBoxWithPricing(pricing) {
+    // ดึงค่าจากฟอร์ม
+    const startDate = $('#startDate').val() || '-';
+    const startTime = $('#startTime').val() || '-';
+    const endDate = $('#endDate').val() || '-';
+    const endTime = $('#endTime').val() || '-';
+    const locationSelect = document.getElementById('location1');
+    const location = locationSelect ? locationSelect.options[locationSelect.selectedIndex].text : '-';
+
+    // สร้างข้อมูลประเภทรถ
+    const carTypeSummary = [];
+    const vehicleRows = document.querySelectorAll('.vehicle-row');
+    vehicleRows.forEach(row => {
+        const carTypeSelect = row.querySelector('.car-type-select');
+        const quantityInput = row.querySelector('.quantity-input');
+        const otherCarTypeInput = row.querySelector('.other-car-type-input input');
+        let carTypeText = '-';
+        if (carTypeSelect) {
+            if (carTypeSelect.value === '1236' && otherCarTypeInput && otherCarTypeInput.value.trim()) {
+                carTypeText = otherCarTypeInput.value.trim();
+            } else if (carTypeSelect.selectedIndex > 0) {
+                carTypeText = carTypeSelect.options[carTypeSelect.selectedIndex].text;
+            }
+        }
+        const qty = quantityInput ? parseInt(quantityInput.value) || 0 : 0;
+        if (carTypeText !== '-' && qty > 0) {
+            carTypeSummary.push({ type: carTypeText, qty });
+        }
+    });
+
+    // สร้าง HTML กลุ่มแนวตั้ง
+    let carTypeDisplay = '-';
+    if (carTypeSummary.length > 0) {
+        carTypeDisplay = carTypeSummary.map(item => `
+            <div class="flex justify-between items-center py-1">
+                <div class="l-1 flex flex-col justify-between gap-2">
+                    <div class="t-1 text-sm font-medium">${item.type}</div>
+                </div>
+                <div class="l-2 flex flex-col justify-between gap-2">
+                    <div class="t-2 text-sm">${item.qty} คัน</div>
+                </div>    
+            </div>
+        `).join('');
+    }
+    const totalQty = carTypeSummary.reduce((sum, item) => sum + item.qty, 0);
+    const quantityDisplay = `${totalQty} คัน`;
+
+    // แสดงราคาที่คำนวณได้
+    const priceElem = document.getElementById('summary-price-per-car');
+    const totalElem = document.getElementById('summary-total');
+    if (priceElem && pricing) {
+        priceElem.textContent = `${pricing.price_per_car.toLocaleString()} บาท/คัน (${pricing.days} วัน)`;
+    }
+    if (totalElem && pricing) {
+        totalElem.textContent = `${pricing.total_price.toLocaleString()} บาท`;
+    }
+    
+    // Update other elements
+    const locationElem = document.getElementById('summary-location');
+    if (locationElem) locationElem.textContent = location;
+    const startDateElem = document.getElementById('summary-start-date');
+    if (startDateElem) startDateElem.textContent = startDate;
+    const startTimeElem = document.getElementById('summary-start-time');
+    if (startTimeElem) startTimeElem.textContent = startTime;
+    const endDateElem = document.getElementById('summary-end-date');
+    if (endDateElem) endDateElem.textContent = endDate;
+    const endTimeElem = document.getElementById('summary-end-time');
+    if (endTimeElem) endTimeElem.textContent = endTime;
+    const quantityElem = document.getElementById('summary-quantity');
+    if (quantityElem) quantityElem.textContent = quantityDisplay;
+    const carQtyElem = document.getElementById('summary-car-qty');
+    if (carQtyElem) carQtyElem.textContent = quantityDisplay;
+    const carTypeElem = document.getElementById('summary-car-type');
+    if (carTypeElem) carTypeElem.innerHTML = carTypeDisplay;
+}
 
 function updateSummaryBox() {
     // ดึงค่าจากฟอร์ม
@@ -1336,14 +1481,14 @@ function updateSummaryBox() {
     const totalQty = carTypeSummary.reduce((sum, item) => sum + item.qty, 0);
     const quantityDisplay = `${totalQty} คัน`;
 
-    // เช็ค element ก่อนเซ็ตค่า
+    // เช็ค element ก่อนเซ็ตค่า - ไม่แสดงราคาจนกว่าจะค้นหา
     const priceElem = document.getElementById('summary-price-per-car');
     const totalElem = document.getElementById('summary-total');
     if (priceElem) {
-        priceElem.textContent = pricePerCar > 0 ? `${pricePerCar.toLocaleString()} บาท/คัน` : 'รอโหลดราคา...';
+        priceElem.textContent = '-';
     }
     if (totalElem) {
-        totalElem.textContent = pricePerCar > 0 ? `${(pricePerCar * totalQty).toLocaleString()} บาท` : '-';
+        totalElem.textContent = '-';
     }
     const locationElem = document.getElementById('summary-location');
     if (locationElem) locationElem.textContent = location;
@@ -1355,29 +1500,12 @@ function updateSummaryBox() {
     if (endDateElem) endDateElem.textContent = endDate;
     const endTimeElem = document.getElementById('summary-end-time');
     if (endTimeElem) endTimeElem.textContent = endTime;
+    // อัปเดตจำนวนรถทั้งหมด
+    const carQtyElem = document.getElementById('summary-car-qty');
+    if (carQtyElem) carQtyElem.textContent = totalQty > 0 ? quantityDisplay : '-';
     // ถ้ามี summary-car-type ให้แสดง carTypeDisplay (HTML)
     const carTypeElem = document.getElementById('summary-car-type');
     if (carTypeElem) carTypeElem.innerHTML = carTypeDisplay;
-    const carQtyElem = document.getElementById('summary-car-qty');
-    if (carQtyElem) carQtyElem.textContent = quantityDisplay;
-}
-
-// เรียกทุกครั้งที่ input หรือ select ในฟอร์มเปลี่ยน
-$('#carReservationForm').on('input change', updateSummaryBox);
-
-// เรียกครั้งแรกเมื่อโหลดหน้า
-updateSummaryBox();
-
-// Fix duplicate addVehicleRow binding - clear old listeners first
-const addVehicleRowBtn = document.getElementById('addVehicleRow');
-if (addVehicleRowBtn) {
-    // Remove all existing listeners by cloning and replacing
-    const newBtn = addVehicleRowBtn.cloneNode(true);
-    addVehicleRowBtn.parentNode.replaceChild(newBtn, addVehicleRowBtn);
-    
-    // Add single listener
-    newBtn.addEventListener('click', addVehicleRow);
-    console.log('AddVehicleRow button fixed - single listener applied');
 }
 
 // Validate all .req-oc fields on form submit
@@ -1506,4 +1634,18 @@ function generateVehicleInputs(container, quantity, rowCount, customVehicleType)
     // Check if the button exists in the DOM
     console.log('Vehicle inputs generated successfully');
 }
+
+    // Add event listeners for date changes to trigger price calculation
+    $('#startDate, #endDate, #startTime, #endTime').on('change', function() {
+        const startDate = $('#startDate').val();
+        const endDate = $('#endDate').val();
+        const startTime = $('#startTime').val();
+        const endTime = $('#endTime').val();
+        
+        // Only calculate price if all date/time fields are filled
+        if (startDate && endDate && startTime && endTime) {
+            calculateParkingPriceRealtime();
+        }
+    });
+
 });
