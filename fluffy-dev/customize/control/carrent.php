@@ -20,20 +20,50 @@ function get_car_location_list() {
     $args = array(
         'post_type'      => 'package_rent',
         'post_status'    => 'publish',
-        'posts_per_page' => -1,
-        'fields'         => 'ids'
+        'posts_per_page' => -1
     );
     $posts = get_posts($args);
-    $data = array();
+    $locations = array();
 
-    foreach ($posts as $post_id) {
-        $data[] = array(
-            'id'    => $post_id,
-            'title' => get_the_title($post_id)
-        );
+    foreach ($posts as $post) {
+        $origin = get_field('origin', $post->ID);
+        $destination = get_field('destination', $post->ID);
+        
+        // Add origin locations
+        if (!empty($origin)) {
+            $origin_locations = explode(',', $origin);
+            foreach ($origin_locations as $location) {
+                $location = trim($location);
+                if (!empty($location) && !in_array($location, array_column($locations, 'title'))) {
+                    $locations[] = array(
+                        'id' => sanitize_title($location),
+                        'title' => $location
+                    );
+                }
+            }
+        }
+        
+        // Add destination locations
+        if (!empty($destination)) {
+            $destination_locations = explode(',', $destination);
+            foreach ($destination_locations as $location) {
+                $location = trim($location);
+                if (!empty($location) && !in_array($location, array_column($locations, 'title'))) {
+                    $locations[] = array(
+                        'id' => sanitize_title($location),
+                        'title' => $location
+                    );
+                }
+            }
+        }
     }
 
-    return rest_ensure_response($data);
+    // Sort locations alphabetically
+    usort($locations, function($a, $b) {
+        return strcmp($a['title'], $b['title']);
+    });
+
+    return rest_ensure_response($locations);
 }
 
 function handle_ajax_carrent() {
