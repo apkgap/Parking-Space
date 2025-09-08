@@ -65,58 +65,58 @@ jQuery(document).ready(function($) {
         });
     });
 
-    /* select funciton */
 
+    function decodeEntities(str) {
+        if (!str) return '';
+        const txt = document.createElement('textarea');
+        txt.innerHTML = str;
+        return txt.value;
+    }
+    
     const populateCarTypes = async (selectId, apiUrl, text) => {
         const selectElement = document.getElementById(selectId);
         const defaultText = text || 'เลือกประเภท';
-
+    
         if (!selectElement) {
-            // console.error(`Error: <select> element with ID '${selectId}' not found.`);
             return;
         }
-
-        // Set initial loading state and disable the select element
+    
         selectElement.innerHTML = '<option value="">Loading...</option>';
         selectElement.disabled = true;
-
+    
         try {
             const response = await fetch(apiUrl);
-
+    
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-
+    
             const data = await response.json();
-            console.log(`API Response for ${selectId}:`, data); // Debug log
-
-            // Check if data is empty
+            console.log(`API Response for ${selectId}:`, data);
+    
             if (!data || data.length === 0) {
                 selectElement.innerHTML = `<option value="">${defaultText}</option><option value="" disabled>ไม่มีข้อมูล</option>`;
                 selectElement.disabled = false;
                 return;
             }
-
-            // Sort data by vehicle title in ascending order (case-insensitive)
+    
             data.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
-
-            // Clear existing options and add a default option
+    
             selectElement.innerHTML = `<option value="">${defaultText}</option>`;
-
-            // Populate the select element with sorted options
+    
             data.forEach(vehicle => {
                 const option = document.createElement('option');
                 option.value = vehicle.id;
-                option.textContent = vehicle.title.replace('->', '→');
+                option.textContent = decodeEntities(vehicle.title).replace('->', '→');
                 selectElement.appendChild(option);
             });
-
-            selectElement.disabled = false; // Re-enable the select element
-
+    
+            selectElement.disabled = false;
+    
         } catch (error) {
             console.error(`Failed to load data for ${selectId} from ${apiUrl}:`, error);
             selectElement.innerHTML = '<option value="">Could not load data</option>';
-            selectElement.disabled = true; // Keep disabled on error
+            selectElement.disabled = true;
         }
     };
 

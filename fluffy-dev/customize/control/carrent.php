@@ -18,7 +18,7 @@ add_action('rest_api_init', function () {
 
 function get_car_location_list() {
     $args = array(
-        'post_type'      => 'car_location',
+        'post_type'      => 'package_rent',
         'post_status'    => 'publish',
         'posts_per_page' => -1,
         'fields'         => 'ids'
