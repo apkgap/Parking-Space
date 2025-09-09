@@ -57,6 +57,7 @@ function enqueue_customize_file() {
     $thaidatejs_file = get_template_directory() . '/customize/js/thai-date.js';
     $space_parking = get_template_directory() . '/customize/js/space-parking.js';
     $tabien_popup = get_template_directory() . '/customize/js/tabien-popup.js';
+    $woocommerce_checkout = get_template_directory() . '/customize/css/woocommerce-checkout.css';
 
     $css_version = filemtime($css_file);
     $js_version = filemtime($js_file);
@@ -74,6 +75,7 @@ function enqueue_customize_file() {
     wp_enqueue_style('select2-styles',  get_template_directory_uri() . '/customize/css/select2.min.css', array());  
     wp_enqueue_script('select2-script', get_template_directory_uri() . '/customize/js/select2.min.js', array('jquery'), $thjs_version, true);
     wp_enqueue_script('tabien-popup-script', get_template_directory_uri() . '/customize/js/tabien-popup.js', array('jquery'), $tabien_popup_version, true);
+    wp_enqueue_style('woocommerce-checkout-style', get_template_directory_uri() . '/customize/css/woocommerce-checkout.css', array());
     
     // Add WordPress global variables for login check
     wp_localize_script('tabien-popup-script', 'wpApiSettings', array(
@@ -917,6 +919,61 @@ function check_parking_availability() {
 add_action('wp_ajax_insert_parking_booking', 'insert_parking_booking');
 add_action('wp_ajax_nopriv_insert_parking_booking', 'insert_parking_booking');
 
+add_action('wp_ajax_validate_coupon', 'validate_coupon');
+add_action('wp_ajax_nopriv_validate_coupon', 'validate_coupon');
+
+function validate_coupon() {
+    $coupon_code = sanitize_text_field($_POST['coupon_code'] ?? '');
+    $total_price = floatval($_POST['total_price'] ?? 0);
+    
+    if (empty($coupon_code)) {
+        wp_send_json_error('กรุณากรอกรหัสคูปอง');
+    }
+    
+    if (!class_exists('WooCommerce')) {
+        wp_send_json_error('WooCommerce ไม่ได้เปิดใช้งาน');
+    }
+    
+    try {
+        $coupon = new WC_Coupon($coupon_code);
+        
+        if (!$coupon->is_valid()) {
+            wp_send_json_error('รหัสคูปองไม่ถูกต้องหรือหมดอายุ');
+        }
+        
+        // Check if coupon has usage limit
+        if ($coupon->get_usage_limit() > 0 && $coupon->get_usage_count() >= $coupon->get_usage_limit()) {
+            wp_send_json_error('คูปองนี้ถูกใช้งานครบจำนวนแล้ว');
+        }
+        
+        // Check minimum amount
+        if ($coupon->get_minimum_amount() > 0 && $total_price < $coupon->get_minimum_amount()) {
+            wp_send_json_error('ยอดขั้นต่ำสำหรับใช้คูปองนี้คือ ' . number_format($coupon->get_minimum_amount()) . ' บาท');
+        }
+        
+        // Calculate discount amount
+        $discount_amount = 0;
+        if ($coupon->get_discount_type() === 'fixed_cart') {
+            $discount_amount = $coupon->get_amount();
+        } elseif ($coupon->get_discount_type() === 'percent') {
+            $discount_amount = ($total_price * $coupon->get_amount()) / 100;
+        }
+        
+        // Make sure discount doesn't exceed total price
+        $discount_amount = min($discount_amount, $total_price);
+        
+        wp_send_json_success([
+            'coupon_code' => $coupon_code,
+            'discount_type' => $coupon->get_discount_type(),
+            'discount_amount' => $discount_amount,
+            'original_amount' => $coupon->get_amount()
+        ]);
+        
+    } catch (Exception $e) {
+        wp_send_json_error('เกิดข้อผิดพลาดในการตรวจสอบคูปอง: ' . $e->getMessage());
+    }
+}
+
 add_action('init', function () {
     $autoload = trailingslashit( WP_PLUGIN_DIR ) . 'yp-qrcode/vendor/autoload.php';
     if ( file_exists( $autoload ) ) {
@@ -1300,6 +1357,80 @@ function insert_parking_booking() {
         ], $post_id);
     }
 
+    // Create WooCommerce order
+    $wc_order_id = null;
+    $checkout_url = null;
+    
+    if (class_exists('WooCommerce')) {
+        try {
+            // Create WooCommerce order
+            $order = wc_create_order();
+            
+            // Add parking booking as a product
+            $product_name = 'การจองที่จอดรถ - ' . $order_code;
+            $product_price = floatval($data['totalPrice'] ?? 0);
+            
+            // Create a simple product for this booking
+            $item_id = $order->add_product(
+                null, // No existing product
+                1, // Quantity
+                array(
+                    'name' => $product_name,
+                    'total' => $product_price
+                )
+            );
+            
+            // Set order details
+            $order->set_address(array(
+                'first_name' => $profile['fullname'] ?? '',
+                'email'      => $profile['email'] ?? '',
+                'phone'      => $profile['phone'] ?? ''
+            ), 'billing');
+            
+            // Add order meta data
+            $order->add_meta_data('parking_booking_id', $post_id);
+            $order->add_meta_data('parking_order_code', $order_code);
+            $order->add_meta_data('parking_start_date', $data['startDate'] ?? '');
+            $order->add_meta_data('parking_end_date', $data['endDate'] ?? '');
+            
+            // Apply coupon if provided
+            if (!empty($data['coupon_code'])) {
+                $coupon_code = sanitize_text_field($data['coupon_code']);
+                $coupon = new WC_Coupon($coupon_code);
+                
+                if ($coupon->is_valid()) {
+                    // Add coupon to order
+                    $order->apply_coupon($coupon_code);
+                    
+                    // Add coupon meta data for reference
+                    $order->add_meta_data('applied_coupon_code', $coupon_code);
+                    $order->add_meta_data('coupon_discount_amount', $coupon->get_amount());
+                } else {
+                    // Log invalid coupon attempt
+                    error_log('Invalid coupon code attempted: ' . $coupon_code);
+                }
+            }
+            
+            // Calculate totals
+            $order->calculate_totals();
+            
+            // Set order status to pending payment
+            $order->set_status('pending');
+            
+            // Save the order
+            $wc_order_id = $order->save();
+            
+            // Update parking booking with WooCommerce order ID
+            update_field('woocommerce_order_id', $wc_order_id, $post_id);
+            
+            // Get checkout URL
+            $checkout_url = $order->get_checkout_payment_url();
+            
+        } catch (Exception $e) {
+            error_log('WooCommerce order creation failed: ' . $e->getMessage());
+        }
+    }
+
     // Send email confirmation
     if (!empty($profile['email'])) {
         // Generate email content
@@ -1318,13 +1449,22 @@ function insert_parking_booking() {
         wp_mail(get_option('admin_email'), 'มีการจองที่จอดรถใหม่ - ' . $order_code, $email_content, $headers);
     }
 
-    wp_send_json_success([
+    $response_data = [
         'message' => 'บันทึกสำเร็จ',
         'post_id' => $post_id,
         'order_code' => $order_code,
         'qr_code_url' => esc_url_raw($qr),
-        'input_data' => $data // <<-- ส่งข้อมูล input กลับไป
-    ]);
+        'input_data' => $data
+    ];
+    
+    // Add WooCommerce data if order was created
+    if ($wc_order_id && $checkout_url) {
+        $response_data['woocommerce_order_id'] = $wc_order_id;
+        $response_data['checkout_url'] = $checkout_url;
+        $response_data['redirect_to_checkout'] = true;
+    }
+
+    wp_send_json_success($response_data);
 }
 
 // ========= Parking Booking Email Template =========

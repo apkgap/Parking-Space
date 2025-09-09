@@ -174,6 +174,11 @@ function transformToGridFormat(apiData) {
         vehicleRowsContainer: document.getElementById('vehicle-rows-container'),
         addVehicleRowButton: document.getElementById('addVehicleRow'),
         errorMessage: document.getElementById('error-message'),
+        couponCode: document.getElementById('coupon_code'),
+        applyCouponBtn: document.getElementById('apply-coupon-btn'),
+        couponMessage: document.getElementById('coupon-message'),
+        summaryDiscount: document.getElementById('summary-discount'),
+        couponDiscountRow: document.getElementById('coupon-discount-row'),
         timePicker: {
             startInput: document.getElementById('startTime'),
             endInput: document.getElementById('endTime'),
@@ -1002,6 +1007,13 @@ async function handleSubmit(event) {
         }
     };
 
+    // เพิ่มข้อมูลคูปองถ้ามีการใช้
+    if (appliedCoupon) {
+        reservationDetails.coupon_code = appliedCoupon.coupon_code;
+        reservationDetails.discount_amount = appliedCoupon.discount_amount;
+        reservationDetails.discount_type = appliedCoupon.discount_type;
+    }
+
     // --- Validation Logic ---
     const totalVehiclesRequired = getTotalVehicleQuantity();
     if (selectedSpaces.length === 0) {
@@ -1050,9 +1062,16 @@ async function handleSubmit(event) {
                 }
             });
             renderAll();
-            // --- Redirect to thank you page with order code and email ---
-            const email = document.querySelector('#email')?.value || '';
-            window.location.href = '/thank-you?order_code=' + response.data.order_code + '&email=' + encodeURIComponent(email);
+            
+            // Check if WooCommerce checkout URL is available
+            if (response.data.redirect_to_checkout && response.data.checkout_url) {
+                // Redirect to WooCommerce checkout for payment
+                window.location.href = response.data.checkout_url;
+            } else {
+                // Fallback to thank you page if no checkout URL
+                const email = document.querySelector('#email')?.value || '';
+                window.location.href = '/thank-you?order_code=' + response.data.order_code + '&email=' + encodeURIComponent(email);
+            }
         } else {
             // Show error message
             const errorMessage = response.data || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่อีกครั้ง';
@@ -1634,6 +1653,135 @@ function generateVehicleInputs(container, quantity, rowCount, customVehicleType)
     // Check if the button exists in the DOM
     console.log('Vehicle inputs generated successfully');
 }
+
+    // Coupon functionality
+    let appliedCoupon = null;
+    let originalPrice = 0;
+    
+    // Apply coupon button event listener
+    if (dom.applyCouponBtn) {
+        dom.applyCouponBtn.addEventListener('click', async function() {
+            const couponCode = dom.couponCode?.value?.trim();
+            
+            if (!couponCode) {
+                showCouponMessage('กรุณากรอกรหัสคูปอง', 'error');
+                return;
+            }
+            
+            // Show loading state
+            dom.applyCouponBtn.disabled = true;
+            dom.applyCouponBtn.textContent = 'กำลังตรวจสอบ...';
+            
+            try {
+                // Get current total price if originalPrice is not set
+                if (!originalPrice) {
+                    const summaryTotal = document.getElementById('summary-total');
+                    if (summaryTotal && summaryTotal.textContent !== '-') {
+                        const priceText = summaryTotal.textContent.replace(/[^\d]/g, '');
+                        originalPrice = parseFloat(priceText) || 0;
+                        console.log('Set originalPrice from current total:', originalPrice);
+                    }
+                }
+
+                const response = await $.post(ajaxurl_obj.ajaxurl, {
+                    action: 'validate_coupon',
+                    coupon_code: couponCode,
+                    total_price: originalPrice
+                });
+                
+                if (response.success) {
+                    appliedCoupon = response.data;
+                    console.log('Applied coupon data:', appliedCoupon);
+                    showCouponMessage(`ใช้คูปองสำเร็จ! ส่วนลด ${appliedCoupon.discount_amount} บาท`, 'success');
+                    updatePriceWithDiscount();
+                } else {
+                    showCouponMessage(response.data || 'รหัสคูปองไม่ถูกต้องหรือหมดอายุ', 'error');
+                }
+            } catch (error) {
+                console.error('Coupon validation error:', error);
+                showCouponMessage('เกิดข้อผิดพลาดในการตรวจสอบคูปอง', 'error');
+            }
+            
+            // Reset button state
+            dom.applyCouponBtn.disabled = false;
+            dom.applyCouponBtn.textContent = 'ใช้คูปอง';
+        });
+    }
+    
+    function showCouponMessage(message, type) {
+        if (!dom.couponMessage) return;
+        
+        dom.couponMessage.textContent = message;
+        dom.couponMessage.className = `text-sm mt-1 ${type === 'success' ? 'text-green-600' : 'text-red-600'}`;
+        dom.couponMessage.classList.remove('hidden');
+        
+        // Hide message after 5 seconds
+        setTimeout(() => {
+            dom.couponMessage.classList.add('hidden');
+        }, 5000);
+    }
+    
+    function updatePriceWithDiscount() {
+        if (!appliedCoupon || !originalPrice) {
+            console.log('Cannot update price with discount:', { appliedCoupon, originalPrice });
+            return;
+        }
+        
+        const discountAmount = parseFloat(appliedCoupon.discount_amount) || 0;
+        const finalPrice = Math.max(0, originalPrice - discountAmount);
+        
+        console.log('Updating price with discount:', {
+            originalPrice,
+            discountAmount,
+            finalPrice,
+            summaryDiscountElement: dom.summaryDiscount,
+            couponDiscountRowElement: dom.couponDiscountRow
+        });
+        
+        // Update summary display
+        if (dom.summaryDiscount) {
+            dom.summaryDiscount.textContent = `-${discountAmount.toLocaleString()} บาท`;
+            console.log('Updated discount display');
+        } else {
+            console.log('summaryDiscount element not found');
+        }
+        
+        if (dom.couponDiscountRow) {
+            dom.couponDiscountRow.classList.remove('hidden');
+            console.log('Showed discount row');
+        } else {
+            console.log('couponDiscountRow element not found');
+        }
+        
+        // Update total price
+        const summaryTotal = document.getElementById('summary-total');
+        if (summaryTotal) {
+            summaryTotal.textContent = `${finalPrice.toLocaleString()} บาท`;
+            console.log('Updated total price to:', finalPrice);
+        } else {
+            console.log('summaryTotal element not found');
+        }
+    }
+    
+    // Override the existing calculateParkingPriceRealtime function to store original price
+    const originalCalculateParkingPriceRealtime = window.calculateParkingPriceRealtime;
+    window.calculateParkingPriceRealtime = async function() {
+        if (originalCalculateParkingPriceRealtime) {
+            await originalCalculateParkingPriceRealtime();
+            
+            // Store the original price for coupon calculations
+            const summaryTotal = document.getElementById('summary-total');
+            if (summaryTotal && summaryTotal.textContent !== '-') {
+                const priceText = summaryTotal.textContent.replace(/[^\d]/g, '');
+                originalPrice = parseFloat(priceText) || 0;
+                
+                // Reapply coupon discount if one was applied
+                if (appliedCoupon) {
+                    updatePriceWithDiscount();
+                }
+            }
+        }
+    };
 
     // Add event listeners for date changes to trigger price calculation
     $('#startDate, #endDate, #startTime, #endTime').on('change', function() {

@@ -421,6 +421,22 @@ get_header();
                                 
                             </div>
 
+                            <!-- Coupon Section -->
+                            <div class="coupon-section">
+                                <div class="flex flex-col md:flex-row gap-4 mb-2">
+                                    <div class="input-group flex-1">
+                                        <label for="coupon_code" class="text-sm sm:text-base lg:text-[16px]">รหัสคูปองส่วนลด (Coupon Code)</label>
+                                        <div class="flex gap-2">
+                                            <input type="text" id="coupon_code" name="coupon_code" class="input-field bg-white flex-1" placeholder="กรอกรหัสคูปอง">
+                                            <button type="button" id="apply-coupon-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                                                ใช้คูปอง
+                                            </button>
+                                        </div>
+                                        <div id="coupon-message" class="text-sm mt-1 hidden"></div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <input type="hidden" id="formDataJson" name="formDataJson">
                             <div class="box-f_btn flex justify-center align-center">
                                 <button type="submit" id="submit-btn" class="submit-button">ส่งข้อมูล</button>
@@ -476,6 +492,10 @@ get_header();
                             <div class="flex justify-between text-sm">
                                 <span>ราคาค่าจอด</span>
                                 <span id="summary-price-per-car">-</span>
+                            </div>
+                            <div id="coupon-discount-row" class="flex justify-between text-sm text-green-600 hidden">
+                                <span>ส่วนลด</span>
+                                <span id="summary-discount">-</span>
                             </div>
                         </div>
                         <hr class="my-2">
