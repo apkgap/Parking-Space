@@ -355,18 +355,20 @@ get_header();
                                 <div class="ib_departureFlightTime"></div>
                             </div>
                         </div>
-                        <div class="mb-4">
+                        <!-- Coupon Section -->
+                        <div class="coupon-section mb-4">
                             <label for="discountCode" class="block text-gray-700 font-medium mb-1">โค้ดส่วนลด</label>
-                            <div class="flex">
+                            <div class="flex gap-2">
                                 <input
                                     type="text"
                                     id="discountCode"
                                     class="input input-bordered flex-grow input-field h-12"
                                     placeholder="#EarlyBird20%"
                                 />
-                                <div class="popup_span w-full hide"></div>
-                                <button class="btn btn-primary ml-2">ใช้โค้ด</button>
+                                <button type="button" id="apply-coupon-btn" class="btn btn-primary">ใช้โค้ด</button>
                             </div>
+                            <div id="coupon-message" class="text-sm mt-1 hidden"></div>
+                            <div class="popup_span w-full hide"></div>
                         </div>
                         <div>
                             <label for="flightNote" class="block text-gray-700 font-medium mb-1">หมายเหตุ</label>
@@ -535,10 +537,10 @@ get_header();
                             <span>ราคารวมทั้งหมด</span>
                             <span id="summary-total-price">1,000 บาท</span>
                         </div>
-                        <!-- <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-0">
+                        <div id="coupon-discount-row" class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-0 text-green-600 hidden">
                             <span>ส่วนลด</span>
-                            <span id="summary-discount">20%</span>
-                        </div> -->
+                            <span id="summary-discount">-</span>
+                        </div>
                     </div>
                     <div class="border-t border-gray-200 my-4"></div>
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xl font-bold mb-6 gap-1 sm:gap-0">

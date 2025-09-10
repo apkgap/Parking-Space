@@ -1393,6 +1393,17 @@ function insert_parking_booking() {
             $order->add_meta_data('parking_start_date', $data['startDate'] ?? '');
             $order->add_meta_data('parking_end_date', $data['endDate'] ?? '');
             
+            // Add booking URL for easy access
+            $booking_url = get_permalink($post_id);
+            if ($booking_url) {
+                $order->add_meta_data('parking_booking_url', $booking_url);
+            }
+            
+            // Add QR code URL if available
+            if (!empty($qr)) {
+                $order->add_meta_data('parking_qr_code_url', $qr);
+            }
+            
             // Apply coupon if provided
             if (!empty($data['coupon_code'])) {
                 $coupon_code = sanitize_text_field($data['coupon_code']);
@@ -1465,6 +1476,174 @@ function insert_parking_booking() {
     }
 
     wp_send_json_success($response_data);
+}
+
+// ========= WooCommerce Order Hooks for Parking Booking =========
+
+// Hook to update parking booking status when WooCommerce order is completed
+add_action('woocommerce_order_status_completed', 'update_parking_booking_on_order_complete');
+add_action('woocommerce_order_status_processing', 'update_parking_booking_on_order_complete');
+
+function update_parking_booking_on_order_complete($order_id) {
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+    
+    // Get parking booking ID from order meta
+    $parking_booking_id = $order->get_meta('parking_booking_id');
+    
+    if ($parking_booking_id) {
+        // Update parking booking status to confirmed/paid
+        update_field('payment_status', 'paid', $parking_booking_id);
+        update_field('booking_status', 'confirmed', $parking_booking_id);
+        
+        // Add payment completion timestamp
+        update_field('payment_completed_at', current_time('mysql'), $parking_booking_id);
+        
+        // Add order completion note
+        $order_code = $order->get_meta('parking_order_code');
+        $note = "การชำระเงินเสร็จสิ้น - WooCommerce Order ID: {$order_id}";
+        if ($order_code) {
+            $note .= " - Order Code: {$order_code}";
+        }
+        
+        // Add note to parking booking post
+        $comment_data = array(
+            'comment_post_ID' => $parking_booking_id,
+            'comment_content' => $note,
+            'comment_type' => 'parking_note',
+            'comment_approved' => 1,
+            'user_id' => 0
+        );
+        wp_insert_comment($comment_data);
+        
+        // Send confirmation email if needed
+        send_parking_confirmation_email($parking_booking_id, $order_id);
+    }
+}
+
+// Function to send parking confirmation email after payment
+function send_parking_confirmation_email($parking_booking_id, $order_id) {
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+    
+    $booking_data = get_field('booking_information', $parking_booking_id);
+    $profile_data = get_field('profile_information', $parking_booking_id);
+    
+    if (!empty($profile_data['email'])) {
+        $order_code = $order->get_meta('parking_order_code');
+        $booking_url = $order->get_meta('parking_booking_url');
+        $qr_code_url = $order->get_meta('parking_qr_code_url');
+        
+        $subject = 'ยืนยันการชำระเงิน - การจองที่จอดรถ ' . $order_code;
+        
+        $message = "
+        <h2>การชำระเงินเสร็จสิ้น</h2>
+        <p>เรียน คุณ{$profile_data['fullname']}</p>
+        <p>การชำระเงินสำหรับการจองที่จอดรถของคุณเสร็จสิ้นแล้ว</p>
+        
+        <h3>รายละเอียดการจอง:</h3>
+        <ul>
+            <li><strong>รหัสการจอง:</strong> {$order_code}</li>
+            <li><strong>WooCommerce Order ID:</strong> {$order_id}</li>
+            <li><strong>สถานะ:</strong> ยืนยันแล้ว</li>
+        </ul>
+        ";
+        
+        if ($booking_url) {
+            $message .= "<p><a href='{$booking_url}'>ดูรายละเอียดการจอง</a></p>";
+        }
+        
+        if ($qr_code_url) {
+            $message .= "<p><strong>QR Code:</strong> <img src='{$qr_code_url}' alt='QR Code' style='max-width: 200px;'></p>";
+        }
+        
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ' . get_bloginfo('name') . ' <' . get_option('admin_email') . '>'
+        );
+        
+        wp_mail($profile_data['email'], $subject, $message, $headers);
+    }
+}
+
+// Add custom columns to WooCommerce orders admin page
+add_filter('manage_edit-shop_order_columns', 'add_parking_booking_columns');
+function add_parking_booking_columns($columns) {
+    $new_columns = array();
+    
+    foreach ($columns as $key => $column) {
+        $new_columns[$key] = $column;
+        
+        // Add parking columns after order status
+        if ($key === 'order_status') {
+            $new_columns['parking_booking_id'] = 'Booking ID';
+            $new_columns['parking_order_code'] = 'Order Code';
+        }
+    }
+    
+    return $new_columns;
+}
+
+// Populate custom columns with data
+add_action('manage_shop_order_posts_custom_column', 'populate_parking_booking_columns', 10, 2);
+function populate_parking_booking_columns($column, $post_id) {
+    $order = wc_get_order($post_id);
+    if (!$order) return;
+    
+    switch ($column) {
+        case 'parking_booking_id':
+            $booking_id = $order->get_meta('parking_booking_id');
+            if ($booking_id) {
+                $booking_url = $order->get_meta('parking_booking_url');
+                if ($booking_url) {
+                    echo '<a href="' . esc_url($booking_url) . '" target="_blank">' . esc_html($booking_id) . '</a>';
+                } else {
+                    echo esc_html($booking_id);
+                }
+            } else {
+                echo '-';
+            }
+            break;
+            
+        case 'parking_order_code':
+            $order_code = $order->get_meta('parking_order_code');
+            echo $order_code ? esc_html($order_code) : '-';
+            break;
+    }
+}
+
+// Add parking booking details to order admin page
+add_action('woocommerce_admin_order_data_after_billing_address', 'display_parking_booking_details_in_admin');
+function display_parking_booking_details_in_admin($order) {
+    $booking_id = $order->get_meta('parking_booking_id');
+    $order_code = $order->get_meta('parking_order_code');
+    $booking_url = $order->get_meta('parking_booking_url');
+    $qr_code_url = $order->get_meta('parking_qr_code_url');
+    
+    if ($booking_id || $order_code) {
+        echo '<div class="address">';
+        echo '<p><strong>ข้อมูลการจองที่จอดรถ:</strong></p>';
+        
+        if ($booking_id) {
+            echo '<p><strong>Booking ID:</strong> ';
+            if ($booking_url) {
+                echo '<a href="' . esc_url($booking_url) . '" target="_blank">' . esc_html($booking_id) . '</a>';
+            } else {
+                echo esc_html($booking_id);
+            }
+            echo '</p>';
+        }
+        
+        if ($order_code) {
+            echo '<p><strong>Order Code:</strong> ' . esc_html($order_code) . '</p>';
+        }
+        
+        if ($qr_code_url) {
+            echo '<p><strong>QR Code:</strong> <br><img src="' . esc_url($qr_code_url) . '" alt="QR Code" style="max-width: 150px; height: auto;"></p>';
+        }
+        
+        echo '</div>';
+    }
 }
 
 // ========= Parking Booking Email Template =========

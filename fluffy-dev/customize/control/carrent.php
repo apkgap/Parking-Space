@@ -16,6 +16,10 @@ add_action('rest_api_init', function () {
     ));
 });
 
+// Add AJAX actions for coupon validation (same as parking system)
+add_action('wp_ajax_validate_coupon_carrent', 'validate_coupon_carrent');
+add_action('wp_ajax_nopriv_validate_coupon_carrent', 'validate_coupon_carrent');
+
 function get_car_location_list() {
     $args = array(
         'post_type'      => 'package_rent',
@@ -64,6 +68,58 @@ function get_car_location_list() {
     });
 
     return rest_ensure_response($locations);
+}
+
+function validate_coupon_carrent() {
+    $coupon_code = sanitize_text_field($_POST['coupon_code'] ?? '');
+    $total_price = floatval($_POST['total_price'] ?? 0);
+    
+    if (empty($coupon_code)) {
+        wp_send_json_error('กรุณากรอกรหัสคูปอง');
+    }
+    
+    if (!class_exists('WooCommerce')) {
+        wp_send_json_error('WooCommerce ไม่ได้เปิดใช้งาน');
+    }
+    
+    try {
+        $coupon = new WC_Coupon($coupon_code);
+        
+        if (!$coupon->is_valid()) {
+            wp_send_json_error('รหัสคูปองไม่ถูกต้องหรือหมดอายุ');
+        }
+        
+        // Check if coupon has usage limit
+        if ($coupon->get_usage_limit() > 0 && $coupon->get_usage_count() >= $coupon->get_usage_limit()) {
+            wp_send_json_error('คูปองนี้ถูกใช้งานครบจำนวนแล้ว');
+        }
+        
+        // Check minimum amount
+        if ($coupon->get_minimum_amount() > 0 && $total_price < $coupon->get_minimum_amount()) {
+            wp_send_json_error('ยอดขั้นต่ำสำหรับใช้คูปองนี้คือ ' . number_format($coupon->get_minimum_amount()) . ' บาท');
+        }
+        
+        // Calculate discount amount
+        $discount_amount = 0;
+        if ($coupon->get_discount_type() === 'fixed_cart') {
+            $discount_amount = $coupon->get_amount();
+        } elseif ($coupon->get_discount_type() === 'percent') {
+            $discount_amount = ($total_price * $coupon->get_amount()) / 100;
+        }
+        
+        // Make sure discount doesn't exceed total price
+        $discount_amount = min($discount_amount, $total_price);
+        
+        wp_send_json_success([
+            'coupon_code' => $coupon_code,
+            'discount_type' => $coupon->get_discount_type(),
+            'discount_amount' => $discount_amount,
+            'original_amount' => $coupon->get_amount()
+        ]);
+        
+    } catch (Exception $e) {
+        wp_send_json_error('เกิดข้อผิดพลาดในการตรวจสอบคูปอง: ' . $e->getMessage());
+    }
 }
 
 function handle_ajax_carrent() {
@@ -308,6 +364,17 @@ function sanitize_car_rental_fields($fields) {
             'departure_flight_time' => isset($fields['flight_information']['departure_flight_time']) ? sanitize_text_field($fields['flight_information']['departure_flight_time']) : '',
             'discount_code' => isset($fields['flight_information']['discount_code']) ? sanitize_text_field($fields['flight_information']['discount_code']) : '',
             'remark_flight' => isset($fields['flight_information']['remark_flight']) ? sanitize_textarea_field($fields['flight_information']['remark_flight']) : ''
+        );
+    }
+    
+    // Coupon/Discount Information
+    if (isset($fields['coupon_information'])) {
+        $sanitized['coupon_information'] = array(
+            'coupon_code' => isset($fields['coupon_information']['coupon_code']) ? sanitize_text_field($fields['coupon_information']['coupon_code']) : '',
+            'discount_amount' => isset($fields['coupon_information']['discount_amount']) ? floatval($fields['coupon_information']['discount_amount']) : 0,
+            'discount_percent' => isset($fields['coupon_information']['discount_percent']) ? floatval($fields['coupon_information']['discount_percent']) : 0,
+            'original_price' => isset($fields['coupon_information']['original_price']) ? floatval($fields['coupon_information']['original_price']) : 0,
+            'final_price' => isset($fields['coupon_information']['final_price']) ? floatval($fields['coupon_information']['final_price']) : 0
         );
     }
     

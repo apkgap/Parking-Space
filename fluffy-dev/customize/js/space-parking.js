@@ -1236,6 +1236,30 @@ function initializeTimePickers() {
     if (dom.carReservationForm) {
         dom.carReservationForm.removeEventListener('submit', handleSubmit); // ป้องกันซ้ำ
         dom.carReservationForm.addEventListener('submit', handleSubmit);
+        
+        // Prevent form submission via Enter key or other methods except through submit button
+        dom.carReservationForm.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                // Allow Enter only on the submit button itself
+                if (event.target.id === 'submit-btn' || event.target === dom.submitBtn) {
+                    return; // Allow normal behavior for submit button
+                }
+                event.preventDefault();
+                return false;
+            }
+        });
+        
+        // Prevent form submission via any other method except the designated submit button
+        dom.carReservationForm.addEventListener('submit', function(event) {
+            // Check if the submission was triggered by our designated submit button
+            const isFromSubmitButton = event.submitter && (event.submitter.id === 'submit-btn' || event.submitter === dom.submitBtn);
+            
+            if (!isFromSubmitButton) {
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+        });
     }
 
 
@@ -1795,5 +1819,27 @@ function generateVehicleInputs(container, quantity, rowCount, customVehicleType)
             calculateParkingPriceRealtime();
         }
     });
+    
+    // Prevent Enter key submission on all form inputs
+    $(document).on('keydown', 'input, select, textarea', function(event) {
+        if (event.key === 'Enter') {
+            // Allow Enter only on the submit button
+            if (this.id === 'submit-btn' || this === dom.submitBtn) {
+                return true;
+            }
+            event.preventDefault();
+            return false;
+        }
+    });
+    
+    // Additional protection: Override form submit method
+    if (dom.carReservationForm && dom.carReservationForm.submit) {
+        const originalSubmit = dom.carReservationForm.submit;
+        dom.carReservationForm.submit = function() {
+            // Only allow programmatic submission if it's from our handleSubmit function
+            console.warn('Form submission blocked - use the designated submit button only');
+            return false;
+        };
+    }
 
 });

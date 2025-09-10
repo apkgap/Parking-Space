@@ -93,6 +93,13 @@ jQuery(document).ready(function($) {
                 departure_flight_time: $('#departureFlightTime').val(),
                 discount_code: $('#discountCode').val(),
                 remark_flight: $('#flightNote').val()
+            },
+            coupon_information: {
+                coupon_code: appliedCoupon ? $('#discountCode').val() : '',
+                discount_amount: discountAmount,
+                discount_percent: discountPercent,
+                original_price: pricePerTrip,
+                final_price: totalPrice
             }
         };
 
@@ -410,6 +417,9 @@ jQuery(document).ready(function($) {
 
     let pricePerTrip = 0;
     let totalPrice = 800;
+    let discountAmount = 0;
+    let discountPercent = 0;
+    let appliedCoupon = null;
 
     async function fetchCarrentPrice() {
         try {
@@ -421,20 +431,146 @@ jQuery(document).ready(function($) {
         } catch (e) {
             pricePerTrip = 0;
         }
-        updateSummaryPrice(); // เรียกที่นี่
+        updateSummaryPrice();
     }
     fetchCarrentPrice();
 
     function updateSummaryPrice() {
-        $('#summary-total-price').text(pricePerTrip.toLocaleString() + ' บาท');
-        // $('#summary-discount').text(discountPercent + '%');
-        $('#summary-grand-total').text(totalPrice.toLocaleString() + ' บาท');
+        const basePrice = pricePerTrip;
+        const finalPrice = Math.max(0, basePrice - discountAmount);
+        
+        $('#summary-total-price').text(basePrice.toLocaleString() + ' บาท');
+        
+        if (discountAmount > 0) {
+            $('#coupon-discount-row').removeClass('hidden');
+            $('#summary-discount').text('-' + discountAmount.toLocaleString() + ' บาท');
+        } else {
+            $('#coupon-discount-row').addClass('hidden');
+        }
+        
+        $('#summary-grand-total').text(finalPrice.toLocaleString() + ' บาท');
+        totalPrice = finalPrice;
     }
 
-    // เรียกทุกครั้งที่คำนวณราคาใหม่ เช่น
-    $('#trip-type, #discountCode, #adultCount, #childCount').on('change input', function() {
-        // ...คำนวณ totalPrice, discountPercent ใหม่...
+    // Coupon functionality
+    $('#apply-coupon-btn').on('click', function() {
+        const couponCode = $('#discountCode').val().trim();
+        if (!couponCode) {
+            showCouponMessage('กรุณากรอกรหัสคูปอง', 'error');
+            return;
+        }
+        
+        applyCoupon(couponCode);
+    });
+
+    function applyCoupon(couponCode) {
+        // Show loading state
+        $('#apply-coupon-btn').prop('disabled', true).text('กำลังตรวจสอบ...');
+        
+        // Use AJAX action like parking system
+        $.ajax({
+            url: ajax_carrent_obj.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'validate_coupon_carrent',
+                coupon_code: couponCode,
+                total_price: pricePerTrip
+            },
+            success: function(response) {
+                if (response.success) {
+                    appliedCoupon = response.data;
+                    discountAmount = response.data.discount_amount;
+                    
+                    showCouponMessage(`ใช้คูปองสำเร็จ! ส่วนลด ${discountAmount} บาท`, 'success');
+                    $('#apply-coupon-btn').text('ใช้แล้ว').addClass('btn-success').removeClass('btn-primary');
+                    $('#discountCode').prop('readonly', true);
+                } else {
+                    showCouponMessage(response.data || 'รหัสคูปองไม่ถูกต้องหรือหมดอายุ', 'error');
+                    $('#apply-coupon-btn').prop('disabled', false).text('ใช้โค้ด');
+                }
+                updateSummaryPrice();
+            },
+            error: function(xhr, status, error) {
+                console.error('Coupon validation error:', error);
+                let errorMessage = 'เกิดข้อผิดพลาดในการตรวจสอบคูปอง';
+                
+                if (xhr.responseJSON && xhr.responseJSON.data) {
+                    errorMessage = xhr.responseJSON.data;
+                }
+                
+                showCouponMessage(errorMessage, 'error');
+                $('#apply-coupon-btn').prop('disabled', false).text('ใช้โค้ด');
+            }
+        });
+    }
+
+    function showCouponMessage(message, type) {
+        const $message = $('#coupon-message');
+        $message.removeClass('hidden text-green-600 text-red-600');
+        
+        if (type === 'success') {
+            $message.addClass('text-green-600');
+        } else {
+            $message.addClass('text-red-600');
+        }
+        
+        $message.text(message);
+        
+        if (type === 'error') {
+            setTimeout(() => {
+                $message.addClass('hidden');
+            }, 5000);
+        }
+    }
+
+    // Reset coupon when discount code is changed
+    $('#discountCode').on('input', function() {
+        if (appliedCoupon && !$(this).prop('readonly')) {
+            appliedCoupon = null;
+            discountAmount = 0;
+            discountPercent = 0;
+            $('#apply-coupon-btn').removeClass('btn-success').addClass('btn-primary').text('ใช้โค้ด').prop('disabled', false);
+            $('#coupon-message').addClass('hidden');
+            updateSummaryPrice();
+        }
+    });
+
+    // เรียกทุกครั้งที่คำนวณราคาใหม่
+    $('#trip-type, #adultCount, #childCount').on('change input', function() {
         updateSummaryPrice();
     });
+
+    // Form submission protection - prevent Enter key submission
+    $('#rentcar-booking-form').on('keydown', function(e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    // Global keydown listener for all form inputs
+    $('#rentcar-booking-form input, #rentcar-booking-form select, #rentcar-booking-form textarea').on('keydown', function(e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    // Submit event listener to check if submission came from designated button
+    $('#rentcar-booking-form').on('submit', function(e) {
+        e.preventDefault();
+        return false;
+    });
+
+    // Override form.submit() method to block programmatic submissions
+    const originalSubmit = HTMLFormElement.prototype.submit;
+    const form = document.getElementById('rentcar-booking-form');
+    if (form) {
+        form.submit = function() {
+            console.warn('Form submission blocked. Use the designated submit button.');
+            return false;
+        };
+    }
 
 });
