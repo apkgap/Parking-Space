@@ -1,6 +1,13 @@
 jQuery(document).ready(function($) {
     var isSubmitting = false;
     var loadingTimeout; // เพิ่มตัวแปรสำหรับจัดการ timeout
+    
+    // Initialize variables at the top
+    let pricePerTrip = 0;
+    let totalPrice = 0;
+    let discountAmount = 0;
+    let discountPercent = 0;
+    let appliedCoupon = null;
 
     $('#carBookingFormBtn').on('click', function(e) {
         e.preventDefault();
@@ -47,6 +54,10 @@ jQuery(document).ready(function($) {
                     selectedPackageData.car_type = value;
                 } else if (name === 'selected_package_price') {
                     selectedPackageData.price = value;
+                    // อัปเดตราคาจากแพ็คเกจที่เลือก
+                    var priceText = value.replace(/[^\d]/g, ''); // ลบตัวอักษรที่ไม่ใช่ตัวเลข
+                    pricePerTrip = parseFloat(priceText) || 0;
+                    updateSummaryPrice(); // Update price display when package changes
                 }
             }
         });
@@ -133,12 +144,17 @@ jQuery(document).ready(function($) {
                 clearTimeout(loadingTimeout);
                 
                 if (res.success) {
-                    // แสดง loading อีก 2 วินาทีก่อน redirect
-                    setTimeout(function() {
-                        // Get email from form
-                        var email = $('#email').val();
-                        window.location.href = '/thank-you?ref=' + res.data.booking_reference + '&email=' + encodeURIComponent(email);
-                    }, 2000);
+                    // Check if WooCommerce checkout URL is available
+                    if (res.data.redirect_to_checkout && res.data.checkout_url) {
+                        // Redirect to WooCommerce checkout
+                        window.location.href = res.data.checkout_url;
+                    } else {
+                        // Fallback to thank you page
+                        setTimeout(function() {
+                            var email = $('#email').val();
+                            window.location.href = '/thank-you?ref=' + res.data.order_code + '&email=' + encodeURIComponent(email);
+                        }, 2000);
+                    }
                 } else {                
                     showFieldError($('#carBookingFormBtn'), res.data?.message || 'An error occurred while creating your booking');
                 }
@@ -400,26 +416,6 @@ jQuery(document).ready(function($) {
     $('#adultCount').on('input blur', function() {
         validatePassengerCount($(this));
     });
-
-    $('#adultCount').on('input blur', function() {
-        const val = parseInt($(this).val(), 10);
-        if (isNaN(val) || val < 1 || val > 10) {
-            $(this).addClass('error');
-            showFieldError($(this), $(this).attr('id') === 'adultCount'
-                ? 'จำนวนผู้โดยสาร (ผู้ใหญ่) ต้องอยู่ระหว่าง 1-10 คน'
-                : 'จำนวนผู้โดยสาร (เด็ก) ต้องอยู่ระหว่าง 1-10 คน'
-            );
-        } else {
-            $(this).removeClass('error');
-            clearFieldError($(this));
-        }
-    });
-
-    let pricePerTrip = 0;
-    let totalPrice = 800;
-    let discountAmount = 0;
-    let discountPercent = 0;
-    let appliedCoupon = null;
 
     async function fetchCarrentPrice() {
         try {

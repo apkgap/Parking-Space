@@ -128,7 +128,7 @@ function handle_ajax_carrent() {
         get_template_directory_uri() . '/customize/js/ajax-carrent.js',
         array('jquery'),
         '1.0.0',
-        null, true
+        true
     );
 
     wp_localize_script(
@@ -210,10 +210,8 @@ function ajax_insert_car_rent_acf() {
     // Validate booking details
     if (!isset($fields['booking_details']['car_type']) ||
         !isset($fields['booking_details']['adult_count']) ||
-        !isset($fields['booking_details']['child_count']) ||
         empty($fields['booking_details']['car_type']) ||
-        empty($fields['booking_details']['adult_count']) ||
-        empty($fields['booking_details']['child_count'])) {
+        empty($fields['booking_details']['adult_count'])) {
         wp_send_json_error(['message' => 'Please fill in all required booking details']);
         return;
     }
@@ -282,14 +280,295 @@ function ajax_insert_car_rent_acf() {
     // Log successful booking
     error_log("Car rental booking created: Post ID {$post_id}, Reference: {$booking_ref}");
 
+
+    // Create WooCommerce order
+    $wc_order_id = null;
+    $checkout_url = null;
+    
+    if (class_exists('WooCommerce')) {
+        try {
+            // Get price from selected package or booking details
+            $total_price = 0;
+            if (isset($sanitized_fields['selected_package']['price'])) {
+                $price_text = $sanitized_fields['selected_package']['price'];
+                $total_price = floatval(preg_replace('/[^\d.]/', '', $price_text));
+            } elseif (isset($sanitized_fields['booking_details']['total_price'])) {
+                $total_price = floatval($sanitized_fields['booking_details']['total_price']);
+            }
+            
+            if ($total_price <= 0) {
+                $total_price = 800; // Default fallback price
+            }
+            
+            // Create WooCommerce order
+            $order = wc_create_order();
+            
+            // Add car rental booking as a product
+            $product_name = 'การจองรถเช่า - ' . $booking_ref;
+            
+            // Create a simple product for this booking
+            $item_id = $order->add_product(
+                null, // No existing product
+                1, // Quantity
+                array(
+                    'name' => $product_name,
+                    'total' => $total_price
+                )
+            );
+            
+            // Set order details
+            $order->set_address(array(
+                'first_name' => $sanitized_fields['personal_information']['full_name'] ?? '',
+                'email'      => $sanitized_fields['personal_information']['email'] ?? '',
+                'phone'      => $sanitized_fields['personal_information']['phone_number'] ?? ''
+            ), 'billing');
+            
+            // Add order meta data
+            $order->add_meta_data('carrent_booking_id', $post_id);
+            $order->add_meta_data('carrent_order_code', $booking_ref);
+            
+            // Add travel dates if available
+            if (isset($sanitized_fields['travel_information_outbound_trip']['depart_date'])) {
+                $order->add_meta_data('carrent_depart_date', $sanitized_fields['travel_information_outbound_trip']['depart_date']);
+            }
+            if (isset($sanitized_fields['travel_information_return_trip']['return_date'])) {
+                $order->add_meta_data('carrent_return_date', $sanitized_fields['travel_information_return_trip']['return_date']);
+            }
+            
+            // Add booking URL for easy access
+            $booking_url = get_permalink($post_id);
+            if ($booking_url) {
+                $order->add_meta_data('carrent_booking_url', $booking_url);
+            }
+            
+            
+            // Apply coupon if provided
+            if (!empty($sanitized_fields['coupon_information']['coupon_code'])) {
+                $coupon_code = sanitize_text_field($sanitized_fields['coupon_information']['coupon_code']);
+                $coupon = new WC_Coupon($coupon_code);
+                
+                if ($coupon->is_valid()) {
+                    // Add coupon to order
+                    $order->apply_coupon($coupon_code);
+                    
+                    // Add coupon meta data for reference
+                    $order->add_meta_data('applied_coupon_code', $coupon_code);
+                    $order->add_meta_data('coupon_discount_amount', $coupon->get_amount());
+                } else {
+                    // Log invalid coupon attempt
+                    error_log('Invalid coupon code attempted: ' . $coupon_code);
+                }
+            }
+            
+            // Calculate totals
+            $order->calculate_totals();
+            
+            // Set order status to pending payment
+            $order->set_status('pending');
+            
+            // Save the order
+            $wc_order_id = $order->save();
+            
+            // Update car rental booking with WooCommerce order ID
+            if (function_exists('update_field')) {
+                update_field('woocommerce_order_id', $wc_order_id, $post_id);
+            }
+            
+            // Get checkout URL
+            $checkout_url = $order->get_checkout_payment_url();
+            
+        } catch (Exception $e) {
+            error_log('WooCommerce order creation failed: ' . $e->getMessage());
+        }
+    }
+
     // Send confirmation email
     send_car_rental_confirmation_email($sanitized_fields, $booking_ref, $post_id);
 
-    wp_send_json_success([
+    $response_data = [
         'message' => 'Booking created successfully!',
         'post_id' => $post_id,
-        'booking_reference' => $booking_ref
-    ]);
+        'booking_reference' => $booking_ref,
+        'qr_code_url' => $qr_code_url
+    ];
+    
+    // Add WooCommerce data if order was created
+    if ($wc_order_id && $checkout_url) {
+        $response_data['woocommerce_order_id'] = $wc_order_id;
+        $response_data['checkout_url'] = $checkout_url;
+        $response_data['redirect_to_checkout'] = true;
+    }
+
+    wp_send_json_success($response_data);
+}
+
+
+// WooCommerce Order Hooks for Car Rental Booking
+add_action('woocommerce_order_status_completed', 'update_carrent_booking_on_order_complete');
+add_action('woocommerce_order_status_processing', 'update_carrent_booking_on_order_complete');
+
+// Hook to redirect after payment completion
+add_action('woocommerce_thankyou', 'carrent_redirect_after_payment', 10, 1);
+
+function update_carrent_booking_on_order_complete($order_id) {
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+    
+    // Get car rental booking ID from order meta
+    $carrent_booking_id = $order->get_meta('carrent_booking_id');
+    
+    if ($carrent_booking_id) {
+        // Update car rental booking status to confirmed/paid
+        if (function_exists('update_field')) {
+            update_field('payment_status', 'paid', $carrent_booking_id);
+            update_field('booking_status', 'confirmed', $carrent_booking_id);
+            
+            // Add payment completion timestamp
+            update_field('payment_completed_at', current_time('mysql'), $carrent_booking_id);
+        }
+        
+        // Add order completion note
+        $order_code = $order->get_meta('carrent_order_code');
+        $note = "การชำระเงินเสร็จสิ้น - WooCommerce Order ID: {$order_id}";
+        if ($order_code) {
+            $note .= " - Order Code: {$order_code}";
+        }
+        
+        // Add note to car rental booking post
+        $comment_data = array(
+            'comment_post_ID' => $carrent_booking_id,
+            'comment_content' => $note,
+            'comment_type' => 'carrent_note',
+            'comment_approved' => 1,
+            'user_id' => 0
+        );
+        wp_insert_comment($comment_data);
+        
+        // Send confirmation email if needed
+        send_carrent_confirmation_email($carrent_booking_id, $order_id);
+        
+        // Redirect to thank you page after payment completion
+        $customer_email = get_field('customer_email', $carrent_booking_id);
+        if (!$customer_email && function_exists('get_field')) {
+            $personal_info = get_field('personal_information', $carrent_booking_id);
+            if ($personal_info && isset($personal_info['email'])) {
+                $customer_email = $personal_info['email'];
+            }
+        }
+        
+        $thank_you_url = home_url('/thank-you/');
+        $thank_you_url = add_query_arg([
+            'order_code' => $order_code,
+            'email' => $customer_email
+        ], $thank_you_url);
+        
+        // Store redirect URL in session or transient for later use
+        set_transient('carrent_payment_redirect_' . $order_id, $thank_you_url, 300); // 5 minutes
+    }
+}
+
+// Function to send car rental confirmation email after payment
+function send_carrent_confirmation_email($carrent_booking_id, $order_id) {
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+    
+    $customer_email = get_field('customer_email', $carrent_booking_id);
+    $customer_name = get_field('customer_name', $carrent_booking_id);
+    
+    if (!$customer_email && function_exists('get_field')) {
+        // Try to get from personal_information structure
+        $personal_info = get_field('personal_information', $carrent_booking_id);
+        if ($personal_info && isset($personal_info['email'])) {
+            $customer_email = $personal_info['email'];
+        }
+        if ($personal_info && isset($personal_info['full_name'])) {
+            $customer_name = $personal_info['full_name'];
+        }
+    }
+    
+    if (!empty($customer_email)) {
+        $order_code = $order->get_meta('carrent_order_code');
+        $booking_url = $order->get_meta('carrent_booking_url');
+        
+        $subject = 'ยืนยันการชำระเงิน - การจองรถเช่า ' . $order_code;
+        
+        $message = "
+        <h2>การชำระเงินเสร็จสิ้น</h2>
+        <p>เรียน คุณ{$customer_name}</p>
+        <p>การชำระเงินสำหรับการจองรถเช่าของคุณเสร็จสิ้นแล้ว</p>
+        
+        <h3>รายละเอียดการจอง:</h3>
+        <ul>
+            <li><strong>รหัสการจอง:</strong> {$order_code}</li>
+            <li><strong>WooCommerce Order ID:</strong> {$order_id}</li>
+            <li><strong>สถานะ:</strong> ยืนยันแล้ว</li>
+        </ul>
+        ";
+        
+        if ($booking_url) {
+            $message .= "<p><a href='{$booking_url}'>ดูรายละเอียดการจอง</a></p>";
+        }
+        
+        
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ' . get_bloginfo('name') . ' <' . get_option('admin_email') . '>'
+        );
+        
+        wp_mail($customer_email, $subject, $message, $headers);
+    }
+}
+
+// Function to handle redirect after payment completion
+function carrent_redirect_after_payment($order_id) {
+    if (!$order_id) return;
+    
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+    
+    // Check if this is a car rental booking order
+    $carrent_booking_id = $order->get_meta('carrent_booking_id');
+    
+    if ($carrent_booking_id) {
+        // Get redirect URL from transient
+        $redirect_url = get_transient('carrent_payment_redirect_' . $order_id);
+        
+        if ($redirect_url) {
+            // Clean up transient
+            delete_transient('carrent_payment_redirect_' . $order_id);
+            
+            // Redirect using JavaScript since we're in a hook
+            echo '<script type="text/javascript">
+                setTimeout(function() {
+                    window.location.href = "' . esc_url($redirect_url) . '";
+                }, 2000); // Wait 2 seconds to show thank you message first
+            </script>';
+        } else {
+            // Fallback redirect if transient is not available
+            $order_code = $order->get_meta('carrent_order_code');
+            
+            // Get customer email
+            $customer_email = get_field('customer_email', $carrent_booking_id);
+            if (!$customer_email && function_exists('get_field')) {
+                $personal_info = get_field('personal_information', $carrent_booking_id);
+                if ($personal_info && isset($personal_info['email'])) {
+                    $customer_email = $personal_info['email'];
+                }
+            }
+            
+            $thank_you_url = home_url('/thank-you/');
+            $thank_you_url = add_query_arg([
+                'order_code' => $order_code,
+                'email' => $customer_email
+            ], $thank_you_url);
+            
+            echo '<script type="text/javascript">
+                setTimeout(function() {
+                    window.location.href = "' . esc_url($thank_you_url) . '";
+                }, 2000);
+            </script>';
+        }
+    }
 }
 
 function sanitize_car_rental_fields($fields) {

@@ -1484,6 +1484,9 @@ function insert_parking_booking() {
 add_action('woocommerce_order_status_completed', 'update_parking_booking_on_order_complete');
 add_action('woocommerce_order_status_processing', 'update_parking_booking_on_order_complete');
 
+// Hook to redirect after payment completion for parking
+add_action('woocommerce_thankyou', 'parking_redirect_after_payment', 10, 1);
+
 function update_parking_booking_on_order_complete($order_id) {
     $order = wc_get_order($order_id);
     if (!$order) return;
@@ -1518,6 +1521,21 @@ function update_parking_booking_on_order_complete($order_id) {
         
         // Send confirmation email if needed
         send_parking_confirmation_email($parking_booking_id, $order_id);
+        
+        // Redirect to thank you page after payment completion
+        $customer_email = '';
+        if ($booking_data && isset($booking_data['email'])) {
+            $customer_email = $booking_data['email'];
+        }
+        
+        $thank_you_url = home_url('/thank-you/');
+        $thank_you_url = add_query_arg([
+            'order_code' => $order_code,
+            'email' => $customer_email
+        ], $thank_you_url);
+        
+        // Store redirect URL in session or transient for later use
+        set_transient('parking_payment_redirect_' . $order_id, $thank_you_url, 300); // 5 minutes
     }
 }
 
@@ -1563,6 +1581,56 @@ function send_parking_confirmation_email($parking_booking_id, $order_id) {
         );
         
         wp_mail($profile_data['email'], $subject, $message, $headers);
+    }
+}
+
+// Function to handle redirect after payment completion for parking
+function parking_redirect_after_payment($order_id) {
+    if (!$order_id) return;
+    
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+    
+    // Check if this is a parking booking order
+    $parking_booking_id = $order->get_meta('parking_booking_id');
+    
+    if ($parking_booking_id) {
+        // Get redirect URL from transient
+        $redirect_url = get_transient('parking_payment_redirect_' . $order_id);
+        
+        if ($redirect_url) {
+            // Clean up transient
+            delete_transient('parking_payment_redirect_' . $order_id);
+            
+            // Redirect using JavaScript since we're in a hook
+            echo '<script type="text/javascript">
+                setTimeout(function() {
+                    window.location.href = "' . esc_url($redirect_url) . '";
+                }, 2000); // Wait 2 seconds to show thank you message first
+            </script>';
+        } else {
+            // Fallback redirect if transient is not available
+            $order_code = $order->get_meta('parking_order_code');
+            
+            // Get customer email
+            $booking_data = get_field('booking_information', $parking_booking_id);
+            $customer_email = '';
+            if ($booking_data && isset($booking_data['email'])) {
+                $customer_email = $booking_data['email'];
+            }
+            
+            $thank_you_url = home_url('/thank-you/');
+            $thank_you_url = add_query_arg([
+                'order_code' => $order_code,
+                'email' => $customer_email
+            ], $thank_you_url);
+            
+            echo '<script type="text/javascript">
+                setTimeout(function() {
+                    window.location.href = "' . esc_url($thank_you_url) . '";
+                }, 2000);
+            </script>';
+        }
     }
 }
 
