@@ -531,9 +531,7 @@ function carrent_redirect_after_payment($order_id) {
             
             // Redirect using JavaScript since we're in a hook
             echo '<script type="text/javascript">
-                setTimeout(function() {
                     window.location.href = "' . esc_url($redirect_url) . '";
-                }, 2000); // Wait 2 seconds to show thank you message first
             </script>';
         } else {
             // Fallback redirect if transient is not available
@@ -555,9 +553,7 @@ function carrent_redirect_after_payment($order_id) {
             ], $thank_you_url);
             
             echo '<script type="text/javascript">
-                setTimeout(function() {
-                    window.location.href = "' . esc_url($thank_you_url) . '";
-                }, 2000);
+                window.location.href = "' . esc_url($thank_you_url) . '";
             </script>';
         }
     }

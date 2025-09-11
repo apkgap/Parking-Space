@@ -533,7 +533,8 @@ jQuery(document).ready(function($) {
     });
 
     // เรียกทุกครั้งที่คำนวณราคาใหม่
-    $('#trip-type, #adultCount, #childCount').on('change input', function() {
+    // Update price summary when trip type changes
+    $('#trip-type').on('change', function() {
         updateSummaryPrice();
     });
 
