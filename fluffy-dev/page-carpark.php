@@ -114,15 +114,15 @@ get_header();
                                 </div>
                             </div>
 
-                            <button type="button" id="addVehicleRow" class="add-row-button flex items-center gap-2">
+                            <button type="button" id="addVehicleRow" class="add-row-button flex items-center gap-2 cursor-pointer">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
                                 </svg>
-                                <span class="font-light text-sm">ถ้ามีประเภทรถฝากเพิ่ม (If there are additional vehicle types to add)</span>
+                                <span class="font-light text-sm cursor-pointer">ถ้ามีประเภทรถฝากเพิ่ม (If there are additional vehicle types to add)</span>
                             </button>
 
                             <div class="box-f_btn flex justify-center align-center">
-                                <button type="button" id="btn-search_all" class="submit-button">ค้นหา</button>
+                                <button type="button" id="btn-search_all" class="submit-button cursor-pointer">ค้นหา</button>
                             </div>  
                                                         
 
@@ -190,7 +190,7 @@ get_header();
                                             </div>
                                             <div>
                                                 <!-- This button is hidden when multiple spaces are selected in new logic -->
-                                                <button id="toggle-status-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-primary transition-colors" style="display: none;">
+                                                <button id="toggle-status-btn" class="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-primary transition-colors cursor-pointer" style="display: none;">
                                                     เปลี่ยนสถานะ
                                                 </button>
                                             </div>
@@ -428,7 +428,7 @@ get_header();
                                         <label for="coupon_code" class="text-sm sm:text-base lg:text-[16px]">รหัสคูปองส่วนลด (Coupon Code)</label>
                                         <div class="flex gap-2">
                                             <input type="text" id="coupon_code" name="coupon_code" class="input-field bg-white flex-1" placeholder="กรอกรหัสคูปอง">
-                                            <button type="button" id="apply-coupon-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                                            <button type="button" id="apply-coupon-btn" class="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors text-sm cursor-pointer">
                                                 ใช้คูปอง
                                             </button>
                                         </div>
@@ -439,7 +439,7 @@ get_header();
 
                             <input type="hidden" id="formDataJson" name="formDataJson">
                             <div class="box-f_btn flex justify-center align-center">
-                                <button type="submit" id="submit-btn" class="submit-button">ส่งข้อมูล</button>
+                                <button type="submit" id="submit-btn" class="submit-button cursor-pointer">ส่งข้อมูล</button>
                             </div>                        
                         </form>
                     </div>
@@ -504,7 +504,7 @@ get_header();
                             <span>รวม</span>
                             <span id="summary-total" class="text-primary">-</span>
                         </div>
-                        <button type="submit" id="submit-btn" class="hide w-full bg-primary text-white font-[600] py-2 rounded-xl transition-colors text-base hover:opacity-70 submit-button">
+                        <button type="submit" id="submit-btn" class="hide w-full bg-primary text-white font-[600] py-2 rounded-xl transition-colors text-base hover:opacity-70 submit-button cursor-pointer">
                             จองทันที
                         </button>
                     </div>

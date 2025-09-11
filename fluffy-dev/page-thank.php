@@ -15,16 +15,7 @@ $order_code = isset($_GET['order_code']) ? sanitize_text_field($_GET['order_code
 // Determine booking type based on reference format
 $is_car_rental = !empty($booking_ref) && strpos($booking_ref, 'CR') === 0;
 $is_parking = !empty($order_code);
-
-
-$qr_code_image_url = generate_booking_qr_code_png('145545','ORD00000001');
 ?>
-<?php if (!empty($qr_code_image_url)) : ?>
-    <div class="qr-code-test-container text-center p-4">
-        <h2 class="text-lg font-bold mb-2">Test QR Code</h2>
-        <img src="<?php echo esc_url($qr_code_image_url); ?>" alt="Test QR Code" class="mx-auto">
-    </div>
-<?php endif; ?>
 
 <div id="ty-page" class="min-h-screen flex items-center py-10">
     <div class="max-w-full w-full mx-auto">

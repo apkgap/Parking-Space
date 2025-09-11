@@ -1394,7 +1394,7 @@ function insert_parking_booking() {
             $order->add_meta_data('parking_end_date', $data['endDate'] ?? '');
             
             // Add booking URL for easy access
-            $booking_url = get_permalink($post_id);
+            $booking_url = admin_url('post.php?post=' . $post_id . '&action=edit&classic-editor');
             if ($booking_url) {
                 $order->add_meta_data('parking_booking_url', $booking_url);
             }
@@ -1626,9 +1626,7 @@ function parking_redirect_after_payment($order_id) {
             ], $thank_you_url);
             
             echo '<script type="text/javascript">
-                setTimeout(function() {
-                    window.location.href = "' . esc_url($thank_you_url) . '";
-                }, 2000);
+            window.location.href = "' . esc_url($thank_you_url) . '";
             </script>';
         }
     }

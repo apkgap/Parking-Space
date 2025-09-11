@@ -34,7 +34,8 @@ body.woocommerce-order-received {
 .woocommerce-order-received .entry-content,
 .woocommerce-order-received .v-container,
 .woocommerce-order-received .container {
-    max-width: 500px !important;
+    max-width: 550px !important;
+    width: 100% !important;
     margin: 0 auto !important;
     padding: 20px !important;
 }
@@ -78,10 +79,10 @@ body.woocommerce-order-received {
 /* Success Notice Override */
 .woocommerce-order-received .woocommerce-notice,
 .woocommerce-order-received .woocommerce-thankyou-order-received {
-    background: #dbeafe !important;
+    background: rgba(219, 234, 254, 0.603) !important;
     border: none !important;
-    border-left: 4px solid #3b82f6 !important;
-    color: #1e40af !important;
+    border-left: 4px solid #29B2E2 !important;
+    color: #29B2E2 !important;
     padding: 16px 20px !important;
     margin: 0 0 32px 0 !important;
     border-radius: 0 8px 8px 0 !important;
@@ -118,7 +119,7 @@ body.woocommerce-order-received {
 .woocommerce-order-received .woocommerce-order-overview li strong {
     display: block !important;
     font-size: 1.1rem !important;
-    color: #3b82f6 !important;
+    color: #29B2E2 !important;
     margin-top: 4px !important;
     font-weight: 600 !important;
 }
@@ -189,7 +190,7 @@ body.woocommerce-order-received {
 }
 
 .woocommerce-order-received .woocommerce-table .product-total {
-    color: #3b82f6 !important;
+    color: #29B2E2 !important;
     font-weight: 700 !important;
     font-size: 1.1rem !important;
     flex-shrink: 0 !important;
@@ -228,7 +229,7 @@ body.woocommerce-order-received {
 }
 
 .woocommerce-order-received .woocommerce-table tfoot td {
-    color: #3b82f6 !important;
+    color: #29B2E2 !important;
     font-weight: 600 !important;
     text-align: right !important;
     padding: 0 !important;
@@ -246,14 +247,16 @@ body.woocommerce-order-received {
 /* Price Styling Override */
 .woocommerce-order-received .woocommerce-Price-amount,
 .woocommerce-order-received .amount {
-    color: #3b82f6 !important;
+    color: #29B2E2 !important;
     font-weight: 600 !important;
 }
 
 .woocommerce-order-received .woocommerce-Price-currencySymbol {
     margin-right: 2px !important;
 }
-
+.woocommerce ul.order_details::after, .woocommerce ul.order_details::before {
+    content: unset;
+}
 /* Remove any unwanted margins/paddings from theme */
 .woocommerce-order-received .site-main,
 .woocommerce-order-received .content-area,

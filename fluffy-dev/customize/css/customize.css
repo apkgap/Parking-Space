@@ -746,6 +746,9 @@ div#qr-reader__scan_region{
     align-items: center !important;
     justify-content: center !important;
 }
+button#line-icon svg {
+    fill: #fff;
+}
 /*ipad (tablet)*/
  @media (max-width: 1028px) {
      .booking-button {
