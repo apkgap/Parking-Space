@@ -4,6 +4,13 @@ function enqueue_car_rental_scripts() {
     if (is_page('carrent')) {
         wp_enqueue_style('car-rental-style', get_template_directory_uri() . '/customize/css/carrent.css');
         wp_enqueue_script('car-rental-script', get_template_directory_uri() . '/customize/js/carrent.js', array('jquery'), null, true);
+        
+        // Enqueue ajax-carrent.js with localized data
+        wp_enqueue_script('ajax-carrent-script', get_template_directory_uri() . '/customize/js/ajax-carrent.js', array('jquery'), null, true);
+        wp_localize_script('ajax-carrent-script', 'ajax_carrent_obj', array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('carrent_nonce')
+        ));
     }
 }
 add_action('wp_enqueue_scripts', 'enqueue_car_rental_scripts'); 
@@ -122,25 +129,6 @@ function validate_coupon_carrent() {
     }
 }
 
-function handle_ajax_carrent() {
-    wp_enqueue_script(
-        'ajax-carrent',
-        get_template_directory_uri() . '/customize/js/ajax-carrent.js',
-        array('jquery'),
-        '1.0.0',
-        true
-    );
-
-    wp_localize_script(
-        'ajax-carrent',
-        'ajax_carrent_obj',
-        array(
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce'    => wp_create_nonce('carrent_ajax_nonce'),
-        )
-    );
-}
-add_action('wp_enqueue_scripts', 'handle_ajax_carrent');
 
 
 // PHP Backend - Improved AJAX Handler
@@ -149,7 +137,7 @@ add_action('wp_ajax_nopriv_insert_car_rent_acf', 'ajax_insert_car_rent_acf');
 
 function ajax_insert_car_rent_acf() {
     // Security check
-    if (!check_ajax_referer('carrent_ajax_nonce', 'nonce', false)) {
+    if (!check_ajax_referer('carrent_nonce', 'nonce', false)) {
         wp_send_json_error(['message' => 'Invalid security token']);
         return;
     }
@@ -388,6 +376,7 @@ function ajax_insert_car_rent_acf() {
     $response_data = [
         'message' => 'Booking created successfully!',
         'post_id' => $post_id,
+        'order_code' => $booking_ref,
         'booking_reference' => $booking_ref,
         'qr_code_url' => $qr_code_url
     ];
@@ -397,6 +386,9 @@ function ajax_insert_car_rent_acf() {
         $response_data['woocommerce_order_id'] = $wc_order_id;
         $response_data['checkout_url'] = $checkout_url;
         $response_data['redirect_to_checkout'] = true;
+    } else {
+        // Log error if order creation failed
+        error_log('WooCommerce order creation failed for car rental booking: ' . $post_id);
     }
 
     wp_send_json_success($response_data);
