@@ -22,10 +22,8 @@ add_action('wp_enqueue_scripts', 'enqueue_ajax_forgot_password_scripts');
 function ajax_forgot_password_handler() {
     // Verify nonce
     if (!wp_verify_nonce($_POST['security'], 'forgot_password_nonce')) {
-        wp_die(json_encode([
-            'success' => false,
-            'data' => ['message' => 'Security check failed. Please refresh the page and try again.']
-        ]));
+        wp_send_json_error(['message' => 'Security check failed. Please refresh the page and try again.']);
+        return;
     }
 
     // Sanitize email
@@ -33,35 +31,27 @@ function ajax_forgot_password_handler() {
     
     // Validate email
     if (empty($user_email)) {
-        wp_die(json_encode([
-            'success' => false,
-            'data' => ['message' => 'Email address is required.']
-        ]));
+        wp_send_json_error(['message' => 'Email address is required.']);
+        return;
     }
 
     if (!is_email($user_email)) {
-        wp_die(json_encode([
-            'success' => false,
-            'data' => ['message' => 'Please enter a valid email address.']
-        ]));
+        wp_send_json_error(['message' => 'Please enter a valid email address.']);
+        return;
     }
 
     // Check if user exists
     $user = get_user_by('email', $user_email);
     if (!$user) {
-        wp_die(json_encode([
-            'success' => false,
-            'data' => ['message' => 'No account found with this email address.']
-        ]));
+        wp_send_json_error(['message' => 'No account found with this email address.']);
+        return;
     }
 
     // Generate password reset key
     $reset_key = get_password_reset_key($user);
     if (is_wp_error($reset_key)) {
-        wp_die(json_encode([
-            'success' => false,
-            'data' => ['message' => 'Failed to generate reset key. Please try again.']
-        ]));
+        wp_send_json_error(['message' => 'Failed to generate reset key. Please try again.']);
+        return;
     }
 
     // Send password reset email
@@ -82,15 +72,9 @@ function ajax_forgot_password_handler() {
     $subject = sprintf(__('[%s] Password Reset'), get_bloginfo('name'));
     
     if (wp_mail($user_email, $subject, $message)) {
-        wp_die(json_encode([
-            'success' => true,
-            'data' => ['message' => 'Password reset link has been sent to your email address.']
-        ]));
+        wp_send_json_success(['message' => 'Password reset link has been sent to your email address.']);
     } else {
-        wp_die(json_encode([
-            'success' => false,
-            'data' => ['message' => 'Failed to send reset email. Please try again.']
-        ]));
+        wp_send_json_error(['message' => 'Failed to send reset email. Please try again.']);
     }
 }
 

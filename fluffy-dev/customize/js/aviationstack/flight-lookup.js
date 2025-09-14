@@ -235,7 +235,7 @@
         flightInput.value = (flightInput.value || '').toUpperCase();
       });
 
-      // ===== AJAX =====
+      // ===== AJAX ===== (Now using FlightAPI.io backend)
       async function searchFlights(q) {
         console.log('searchFlights called with:', q);
         console.log('akpFlightSearch object:', akpFlightSearch);
@@ -263,7 +263,10 @@
           if (!res.ok) throw new Error('Network response was not ok: ' + res.status);
           const data = await res.json();
           console.log('Response data:', data);
+          console.log('Data type:', typeof data);
+          console.log('Data.flights:', data ? data.flights : 'no data');
           if (data && data.error) {
+            console.error('Server error:', data.error);
             throw new Error(data.error || 'Unknown error from server');
           }
           render((data && data.flights) ? data.flights : []);

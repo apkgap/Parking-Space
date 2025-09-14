@@ -13,16 +13,16 @@ function showNotification(type, title, message) {
     const notificationBtn = document.getElementById('notification-btn');
     const successIcon = document.getElementById('success-icon');
     const errorIcon = document.getElementById('error-icon');
-    
+
     if (!notificationModal) return;
-    
+
     notificationTitle.textContent = title;
     notificationMessage.innerHTML = message;
-    
+
     // Reset icons
     if (successIcon) successIcon.classList.add('hidden');
     if (errorIcon) errorIcon.classList.add('hidden');
-    
+
     if (type === 'success') {
         if (successIcon) successIcon.classList.remove('hidden');
         notificationTitle.className = 'text-2xl font-bold mb-4 text-green-600';
@@ -34,13 +34,13 @@ function showNotification(type, title, message) {
         notificationBtn.className = 'px-8 py-3 rounded-xl text-white font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg bg-red-500 hover:bg-red-600';
         notificationBtn.textContent = 'TRY AGAIN';
     }
-    
+
     // Show modal
     notificationModal.classList.remove('hidden');
 }
 
 // DOM Ready
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('forgotPasswordForm');
     if (!form) return;
 
@@ -51,9 +51,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const notificationBtn = document.getElementById('notification-btn');
 
     // Form submission
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', function (e) {
         e.preventDefault();
-        
+
         // Validate form
         if (!validateForm()) {
             return;
@@ -66,30 +66,41 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData();
         formData.append('action', 'ajax_forgot_password');
         formData.append('user_email', document.getElementById('user_email').value);
-        formData.append('security', document.querySelector('[name="forgot_nonce"]').value);
-        
+        formData.append('security', ajax_object.nonce || document.querySelector('[name="forgot_nonce"]').value);
+
         // AJAX request
         fetch(ajax_object.ajax_url, {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
-        .then(data => {
-            setLoadingState(false);
-            
-            if (data.success) {
-                showNotification('success', 'Success!', data.data.message);
-                // Clear form after successful submission
-                document.getElementById('user_email').value = '';
-            } else {
-                showNotification('error', 'Sorry :(', data.data.message);
-            }
-        })
-        .catch(error => {
-            setLoadingState(false);
-            showNotification('error', 'Sorry :(', 'Something went wrong please try again!!');
-            console.error('Forgot password error:', error);
-        });
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                setLoadingState(false);
+
+                if (data.success) {
+                    showNotification('success', 'Success!', data.data.message);
+                    // Clear form after successful submission
+                    document.getElementById('user_email').value = '';
+                } else {
+                    showNotification('error', 'Sorry :(', data.data.message);
+                }
+            })
+            .catch(error => {
+                setLoadingState(false);
+                console.error('Forgot password error:', error);
+
+                // Check if it's a network error
+                if (error instanceof TypeError && error.message.includes('fetch')) {
+                    showNotification('error', 'Connection Error', 'Please check your internet connection and try again.');
+                } else {
+                    showNotification('error', 'Sorry :(', 'Something went wrong please try again!!');
+                }
+            });
     });
 
     function validateForm() {
@@ -116,9 +127,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function setLoadingState(loading) {
         if (!submitBtn) return;
-        
+
         submitBtn.disabled = loading;
-        
+
         if (loading) {
             if (btnText) btnText.classList.add('hidden');
             if (btnLoading) btnLoading.classList.remove('hidden');
@@ -133,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function showFieldError(field, message) {
         field.classList.add('border-red-500');
         field.classList.remove('border-gray-200');
-        
+
         const errorDiv = document.getElementById(field.name + '_error');
         if (errorDiv) {
             errorDiv.textContent = message;
@@ -145,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function hideFieldError(field) {
         field.classList.remove('border-red-500');
         field.classList.add('border-gray-200');
-        
+
         const errorDiv = document.getElementById(field.name + '_error');
         if (errorDiv) {
             errorDiv.classList.add('opacity-0', '-translate-y-2');
@@ -156,13 +167,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Notification modal functionality
     if (notificationBtn) {
-        notificationBtn.addEventListener('click', function() {
+        notificationBtn.addEventListener('click', function () {
             notificationModal.classList.add('hidden');
         });
     }
-    
+
     if (notificationModal) {
-        notificationModal.addEventListener('click', function(e) {
+        notificationModal.addEventListener('click', function (e) {
             if (e.target === notificationModal) {
                 notificationModal.classList.add('hidden');
             }
@@ -172,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Focus effects for inputs
     const inputs = document.querySelectorAll('input[type="email"]');
     inputs.forEach(input => {
-        input.addEventListener('focus', function() {
+        input.addEventListener('focus', function () {
             const icon = this.nextElementSibling;
             if (icon && icon.tagName === 'SVG') {
                 icon.classList.remove('text-gray-400');
@@ -180,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        input.addEventListener('blur', function() {
+        input.addEventListener('blur', function () {
             const icon = this.nextElementSibling;
             if (icon && icon.tagName === 'SVG' && !this.matches(':focus')) {
                 icon.classList.add('text-gray-400');

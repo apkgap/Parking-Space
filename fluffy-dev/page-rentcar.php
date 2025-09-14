@@ -31,7 +31,7 @@ get_header();
                                         type="text"
                                         id="fullname"
                                         class="input input-bordered w-full input-field text-lg h-12"
-                                        placeholder="สมชาย สุขเจริญ"
+                                        placeholder="ชื่อ - นามสกุล"
                                     />
                                     <div class="popup_span w-full hide"></div>
                                 </div>
@@ -41,7 +41,7 @@ get_header();
                                         type="email"
                                         id="email"
                                         class="input input-bordered w-full input-field text-lg h-12"
-                                        placeholder="Somchai@gmail.com"
+                                        placeholder="อีเมล"
                                     />
                                     <div class="popup_span w-full hide"></div>
                                 </div>
@@ -52,7 +52,7 @@ get_header();
                                             type="text"
                                             id="lineId"
                                             class="input input-bordered w-full input-field text-lg h-12"
-                                            placeholder="Somchai"
+                                            placeholder="Line ID / Whatsapp"
                                         />
                                         <div class="popup_span w-full hide"></div>
                                     </div>
@@ -62,7 +62,7 @@ get_header();
                                             type="tel"
                                             id="phone"
                                             class="input input-bordered w-full input-field text-lg h-12"
-                                            placeholder="081-4567-789"
+                                            placeholder="หมายเลขโทรศัพท์"
                                         />
                                         <div class="popup_span w-full hide"></div>
                                     </div>
@@ -97,7 +97,7 @@ get_header();
                                         type="text"
                                         id="departStartNote"
                                         class="input input-bordered w-full input-field text-lg h-12"
-                                        placeholder="ประตู 10"
+                                        placeholder="โปรดระบุ"
                                     />
                                     <div class="popup_span w-full hide"></div>
                                 </div>
@@ -120,7 +120,7 @@ get_header();
                                         type="text"
                                         id="departHuaHinNote"
                                         class="input input-bordered w-full input-field text-lg h-12"
-                                        placeholder="แผงลอย หัวหิน"
+                                        placeholder="โปรดระบุ"
                                     />                                
                                     <div class="popup_span w-full hide"></div>
                                 </div>
@@ -132,6 +132,7 @@ get_header();
                                         type="date"
                                         id="departDate"
                                         class="input input-bordered w-full input-field text-lg h-12"
+                                        placeholder="เลือกวันเดินทางไป"
                                     />
                                     <div class="popup_span w-full hide"></div>
                                 </div>
@@ -142,6 +143,7 @@ get_header();
                                         id="departTime"
                                         class="input input-bordered w-full input-field text-lg h-12"
                                         value="09:00"
+                                        placeholder="กรอกเวลานัดหมาย"
                                     />
                                     <div class="popup_span w-full hide"></div>
                                     <div class="ib_departTime"></div>
@@ -181,7 +183,7 @@ get_header();
                                         type="text"
                                         id="returnStartNote"
                                         class="input input-bordered w-full input-field text-lg h-12"
-                                        placeholder="แผงลอย หัวหิน"
+                                        placeholder="โปรดระบุ"
                                     />
                                     <div class="popup_span w-full hide"></div>
                                 </div>
@@ -205,7 +207,7 @@ get_header();
                                         type="text"
                                         id="returnHuaHinNote"
                                         class="input input-bordered w-full input-field text-lg h-12"
-                                        placeholder="แผงลอย หัวหิน"
+                                        placeholder="โปรดระบุ"
                                     />
                                     <div class="popup_span w-full hide"></div>
                                 </div>
@@ -217,6 +219,7 @@ get_header();
                                         type="date"
                                         id="returnDate"
                                         class="input input-bordered w-full input-field text-lg h-12"
+                                        placeholder="เลือกวันเดินทางกลับ"
                                     />
                                     <div class="popup_span w-full hide"></div>
                                 </div>
@@ -227,6 +230,7 @@ get_header();
                                         id="returnTime"
                                         class="input input-bordered w-full input-field text-lg h-12"
                                         value="18:00"
+                                        placeholder="กรอกเวลานัดหมาย"
                                     />
                                     <div class="popup_span w-full hide"></div>
                                     <div class="ib_returnTime"></div>
@@ -312,7 +316,7 @@ get_header();
                                     type="text"
                                     id="arrivalFlightNo" 
                                     class="input input-bordered w-full input-field h-12"
-                                    placeholder="TG584"
+                                    placeholder="ระบุหมายเลขบินขาเข้า"
                                 />
                                 <div class="popup_data w-full hide"></div>
                                 <div class="popup_span w-full hide"></div>
@@ -325,6 +329,7 @@ get_header();
                                     id="arrivalFlightTime"
                                     class="input input-bordered w-full input-field h-12"
                                     value="09:00"
+                                    placeholder="กรอกเวลาเที่ยวบินขาเข้า"
                                 />
                                 <div class="popup_span w-full hide"></div>
                                 <div class="ib_arrivalFlightTime"></div>
@@ -337,7 +342,7 @@ get_header();
                                     type="text"
                                     id="departureFlightNo"
                                     class="input input-bordered w-full input-field h-12"
-                                    placeholder="TG642"
+                                    placeholder="ระบุหมายเลขบินขาออก"
                                 />
                                 <div class="popup_data w-full hide"></div>
                                 <div class="popup_span w-full hide"></div>
@@ -350,6 +355,7 @@ get_header();
                                     id="departureFlightTime"
                                     class="input input-bordered w-full input-field h-12"
                                     value="09:00"
+                                    placeholder="กรอกเวลาเที่ยวบินขาออก"
                                 />
                                 <div class="popup_span w-full hide"></div>
                                 <div class="ib_departureFlightTime"></div>
