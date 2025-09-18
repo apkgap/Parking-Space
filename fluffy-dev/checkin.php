@@ -196,15 +196,36 @@ get_header(); // Include theme header
                                     <p class="text-base-content/70">Please present this QR code for scanning.</p>
                                 </div>
 
-                                <div class="details-qrcode-wrapper flex justify-center mb-8">
+                                <div class="details-qrcode-wrapper flex justify-center mb-8 flex-col align-center items-center gap-5">
                                     <div class="details-qrcode-container p-4 bg-white border-4 border-primary rounded-2xl shadow-lg w-full max-w-[280px]">
                                         <?php if ($qr_code_url) : ?>
                                             <div class="qrcode-image-wrapper aspect-square box-qrcode">
-                                                <img src="<?php echo esc_url($qr_code_url); ?>" alt="QR Code" style="width:200px; height:200px;">
+                                                <img src="<?php echo $qr_code_url; ?>" alt="QR Code" style="width: 100%; height: 100%;">
                                             </div>
                                         <?php else : ?>
                                             <div class="qrcode-placeholder aspect-square flex items-center justify-center bg-base-200 rounded-lg">
                                                 <p class="text-base-content/50">QR Code not available.</p>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="box-action_ci">
+                                    <?php 
+                                        if ($booking_status == 'confirmed') : ?>
+                                            <div class="checkin-action-box">
+                                                <button type="button" 
+                                                        class="check-in-button btn btn-primary btn-wide btn-lg shadow-lg hover:shadow-xl transition-shadow duration-300 gap-2"
+                                                        data-booking-id="<?php echo get_the_ID(); ?>">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                                                    Confirm Check-in
+                                                </button>
+                                            </div>
+                                        <?php endif; ?>
+                                        <?php if ($booking_status == 'checked-in') : ?>
+                                            <div class="checkout-action-box mt-4">
+                                                <a href="<?php echo home_url('/check-out/?order_code=' . $order_code); ?>" class="btn btn-accent btn-wide btn-lg shadow-lg hover:shadow-xl transition-shadow duration-300 gap-2">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H3m14 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                                                    Go to Check-out
+                                                </a>
                                             </div>
                                         <?php endif; ?>
                                     </div>
@@ -316,7 +337,7 @@ get_header(); // Include theme header
                                     <!-- Status & Action -->
                                     <div class="section-divider divider pt-4"></div>
                                     <div class="status-action-section text-center space-y-4">
-                                        <div class="status-display-wrapper flex justify-between align-center">
+                                        <div class="status-display-wrapper flex flex-col items-center">
                                             <h3 class="font-semibold text-lg mb-2">สถานะการ Check-in</h3>
                                             <div class="status-badge badge <?php echo esc_attr($badge_details['badge_class']); ?> badge-lg gap-2 p-4">
                                                 <?php echo $badge_details['badge_icon']; ?>
@@ -324,26 +345,7 @@ get_header(); // Include theme header
                                             </div>
                                             <?php echo $badge_details['status_time_html']; ?>
                                         </div>
-
-                                        <?php 
-                                        if ($booking_status == 'confirmed') : ?>
-                                            <div class="checkin-action-box">
-                                                <button type="button" 
-                                                        class="check-in-button btn btn-primary btn-wide btn-lg shadow-lg hover:shadow-xl transition-shadow duration-300 gap-2"
-                                                        data-booking-id="<?php echo get_the_ID(); ?>">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
-                                                    Confirm Check-in
-                                                </button>
-                                            </div>
-                                        <?php endif; ?>
-                                        <?php if ($booking_status == 'checked-in') : ?>
-                                            <div class="checkout-action-box mt-4">
-                                                <a href="<?php echo home_url('/check-out/?order_code=' . $order_code); ?>" class="btn btn-accent btn-wide btn-lg shadow-lg hover:shadow-xl transition-shadow duration-300 gap-2">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H3m14 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
-                                                    Go to Check-out
-                                                </a>
-                                            </div>
-                                        <?php endif; ?>
+                                   
                                     </div>
                                 </div>
 

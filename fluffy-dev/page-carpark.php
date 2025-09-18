@@ -49,7 +49,7 @@ get_header();
                             <div id="dateTimeStartGrid" class="flex flex-col md:flex-row gap-5">
                                 <div class="input-group flex-1 mb-4 md:mb-0">
                                     <label for="startDate" class="text-sm sm:text-base lg:text-[16px]">วันเริ่มต้น (Start date)<span class="text-red-500 pr-2">*</span></label>
-                                    <input type="text" id="startDate" name="startDate" class="input-field bg-white" >
+                                    <input type="text" id="startDate" name="startDate" class="input-field bg-white" placeholder="เลือกวันที่เริ่มต้น">
                                 </div>
                                 <div class="input-group b-start_time input-group flex-1">
                                     <label for="startTime" class="text-sm sm:text-base lg:text-[16px]">เวลาเริ่มต้น (Start time)<span class="text-red-500 pr-2">*</span></label>
@@ -62,7 +62,7 @@ get_header();
                             <div id="dateTimeEndGrid" class="flex flex-col md:flex-row gap-5">
                                 <div class="input-group flex-1 mb-4 md:mb-0">
                                     <label for="endDate" class="text-sm sm:text-base lg:text-[16px]">วันสิ้นสุด (End date)<span class="text-red-500 pr-2">*</span></label>
-                                    <input type="text" id="endDate" name="endDate" class="input-field bg-white" >
+                                    <input type="text" id="endDate" name="endDate" class="input-field bg-white" placeholder="เลือกวันที่สิ้นสุด">
                                 </div>
                                 <div class="input-group input-group flex-1">
                                     <label for="endTime" class="text-sm sm:text-base lg:text-[16px]">เวลาสิ้นสุด (End time)<span class="text-red-500 pr-2">*</span></label>
@@ -214,24 +214,24 @@ get_header();
                                 <div class="flex flex-col md:flex-row gap-4 mb-2">
                                     <div class="input-group flex-1">
                                         <label for="fullname" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>ชื่อ - นามสกุล</label>
-                                        <input type="text" id="fullname" name="fullname" class="input-field bg-white req-oc" >
+                                        <input type="text" id="fullname" name="fullname" class="input-field bg-white req-oc" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                     </div>
                                     <div class="input-group flex-1">
                                         <label for="email" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>อีเมล</label>
-                                        <input type="email" id="email" name="email" class="input-field bg-white req-oc" >
+                                        <input type="email" id="email" name="email" class="input-field bg-white req-oc" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                     </div>
                                 </div>
                                 <div class="flex flex-col md:flex-row gap-4 mb-2">
                                     <div class="input-group flex-1">
                                         <label for="phone" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เบอร์โทรศัพท์</label>
-                                        <input type="tel" id="phone" name="phone" class="input-field bg-white req-oc" >
+                                        <input type="tel" id="phone" name="phone" class="input-field bg-white req-oc" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                     </div>
                                     <div class="input-group flex-1">
                                         <label for="lineid" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>Line ID</label>
-                                        <input type="text" id="lineid" name="lineid" class="input-field bg-white req-oc" >
+                                        <input type="text" id="lineid" name="lineid" class="input-field bg-white req-oc" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                     </div>
                                 </div>
@@ -272,14 +272,14 @@ get_header();
                                     <div class="flex flex-col md:flex-row gap-4 mb-2">
                                         <div class="input-group flex-1">
                                         <label for="sending_flight_depart" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>กรอกเที่ยวบินขาออก (Departure Flight No.)</label>
-                                        <input type="text" id="sending_flight_depart" name="sending_flight_depart" class="input-field bg-white req-ocx" >
+                                        <input type="text" id="sending_flight_depart" name="sending_flight_depart" class="input-field bg-white req-ocx" placeholder="ระบุหมายเลขเที่ยวบินขาออก">
                                         <div class="popup_data w-full hide"></div>
                                         <div class="popup_span w-full hide"></div>
                                         <input type="hidden" id="sending_flight_depart_data" name="sending_flight_depart_data">
                                         </div>
                                         <div class="input-group flex-1">
                                         <label for="sending_flight_depart_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลาเที่ยวบินขาออก</label>
-                                        <input type="text" id="sending_flight_depart_time" name="sending_flight_depart_time" class="input-field bg-white req-ocx" >
+                                        <input type="text" id="sending_flight_depart_time" name="sending_flight_depart_time" class="input-field bg-white req-ocx" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         <div class="input_sending_flight_depart_time"></div>
                                         </div>
@@ -287,28 +287,28 @@ get_header();
                                     <div class="flex flex-col md:flex-row gap-4 mb-2">
                                         <div class="input-group flex-1">
                                         <label for="sending_flight_arrival" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>กรอกเที่ยวบินขาเข้า (Arrival Flight No.)</label>
-                                        <input type="text" id="sending_flight_arrival" name="sending_flight_arrival" class="input-field bg-white req-ocx" >
+                                        <input type="text" id="sending_flight_arrival" name="sending_flight_arrival" class="input-field bg-white req-ocx" placeholder="ระบุหมายเลขเที่ยวบินขาเข้า">
                                         <div class="popup_data w-full hide"></div>
                                         <div class="popup_span w-full hide"></div>
                                         <input type="hidden" id="sending_flight_arrival_data" name="sending_flight_arrival_data">
                                         </div>
                                         <div class="input-group flex-1">
                                         <label for="sending_flight_arrival_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลาเที่ยวบินขาเข้า</label>
-                                        <input type="text" id="sending_flight_arrival_time" name="sending_flight_arrival_time" class="input-field bg-white req-ocx" >
+                                        <input type="text" id="sending_flight_arrival_time" name="sending_flight_arrival_time" class="input-field bg-white req-ocx" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         <div class="input_sending_flight_arrival_time"></div>
                                         </div>
                                     </div>
                                     <div class="flex flex-col md:flex-row gap-4 mb-2">
                                         <div class="input-group flex-1">
-                                        <label for="sending_pickup_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลาถึงสนามจอดรถ</label>
-                                        <input type="text" id="sending_pickup_time" name="sending_pickup_time" class="input-field bg-white req-ocx" >
+                                        <label for="sending_pickup_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลาถึงลานจอดรถ</label>
+                                        <input type="text" id="sending_pickup_time" name="sending_pickup_time" class="input-field bg-white req-ocx" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         <div class="input_sending_pickup_time"></div>
                                         </div>
                                         <div class="input-group flex-1">
-                                        <label for="sending_dropoff_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลารับที่สนามบิน</label>
-                                        <input type="text" id="sending_dropoff_time" name="sending_dropoff_time" class="input-field bg-white req-ocx" >
+                                        <label for="sending_dropoff_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลาออกลานจอดรถ</label>
+                                        <input type="text" id="sending_dropoff_time" name="sending_dropoff_time" class="input-field bg-white req-ocx" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         <div class="input_sending_dropoff_time"></div>
                                         </div>
@@ -316,36 +316,36 @@ get_header();
                                     <div class="flex flex-col md:flex-row gap-4 mb-2">
                                         <div class="input-group flex-1">
                                         <label for="sending_pickup_point" class="text-sm sm:text-base lg:text-[16px]">ระบุจุดส่งที่สนามบิน เช่น ประตู 1 ขาออก</label>
-                                        <input type="text" id="sending_pickup_point" name="sending_pickup_point" class="input-field bg-white">
+                                        <input type="text" id="sending_pickup_point" name="sending_pickup_point" class="input-field bg-white" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         </div>
                                         <div class="input-group flex-1">
                                         <label for="sending_dropoff_point" class="text-sm sm:text-base lg:text-[16px]">ระบุจุดรับที่สนามบิน เช่น ประตู 10 ขาเข้า</label>
-                                        <input type="text" id="sending_dropoff_point" name="sending_dropoff_point" class="input-field bg-white">
+                                        <input type="text" id="sending_dropoff_point" name="sending_dropoff_point" class="input-field bg-white" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         </div>
                                     </div>
                                     <div class="flex flex-col md:flex-row gap-4 mb-2">
                                         <div class="input-group flex-1">
                                         <label for="sending_adult_count" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>จำนวนผู้โดยสาร (ผู้ใหญ่)</label>
-                                        <input type="number" id="sending_adult_count" name="sending_adult_count" class="input-field bg-white req-ocx" min="0" >
+                                        <input type="number" id="sending_adult_count" name="sending_adult_count" class="input-field bg-white req-ocx" min="0" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         </div>
                                         <div class="input-group flex-1">
                                         <label for="sending_child_count" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>จำนวนผู้โดยสาร (เด็ก)</label>
-                                        <input type="number" id="sending_child_count" name="sending_child_count" class="input-field bg-white req-ocx" min="0" >
+                                        <input type="number" id="sending_child_count" name="sending_child_count" class="input-field bg-white req-ocx" min="0" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         </div>
                                     </div>
                                     <div class="flex flex-col md:flex-row gap-4 mb-2">
                                         <div class="input-group flex-1">
                                         <label for="sending_baggage_count" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>จำนวนกระเป๋า</label>
-                                        <input type="number" id="sending_baggage_count" name="sending_baggage_count" class="input-field bg-white req-ocx" min="0" >
+                                        <input type="number" id="sending_baggage_count" name="sending_baggage_count" class="input-field bg-white req-ocx" min="0" placeholder="โปรดระบุ  ">
                                         <div class="popup_span w-full hide"></div>
                                         </div>
                                     </div>
                                     <div class="input-group mb-2">
-                                        <label for="sending_pickup_note" class="text-sm sm:text-base lg:text-[16px]">หมายเหตุสำหรับคนขับ เช่น โปรดระบุ เช่น เพิ่มคาร์ซีท</label>
+                                        <label for="sending_pickup_note" class="text-sm sm:text-base lg:text-[16px]">หมายเหตุสำหรับคนขับ </label>
                                         <input type="text" id="sending_pickup_note" name="sending_pickup_note" class="input-field bg-white" placeholder="โปรดระบุ เช่น เพิ่มคาร์ซีท">
                                         <div class="popup_span w-full hide"></div>
                                     </div>
@@ -358,14 +358,14 @@ get_header();
                                     <div class="flex flex-col md:flex-row gap-4 mb-2">
                                         <div class="input-group flex-1">
                                         <label for="flight_depart" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>กรอกเที่ยวบินขาออก (Departure Flight No.)</label>
-                                        <input type="text" id="flight_depart" name="flight_depart" class="input-field bg-white req-ocx" >
+                                        <input type="text" id="flight_depart" name="flight_depart" class="input-field bg-white req-ocx" placeholder="ระบุหมายเลขเที่ยวบินขาออก">
                                         <div class="popup_data w-full hide"></div>
                                         <div class="popup_span w-full hide"></div>
                                         <input type="hidden" id="flight_depart_data" name="flight_depart_data">
                                         </div>
                                         <div class="input-group flex-1">
                                         <label for="flight_depart_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลาเที่ยวบินขาออก</label>
-                                        <input type="text" id="flight_depart_time" name="flight_depart_time" class="input-field bg-white req-ocx" >
+                                        <input type="text" id="flight_depart_time" name="flight_depart_time" class="input-field bg-white req-ocx" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         <div class="input_flight_depart_time"></div>
                                         </div>
@@ -373,14 +373,14 @@ get_header();
                                     <div class="flex flex-col md:flex-row gap-4 mb-2">
                                         <div class="input-group flex-1">
                                         <label for="flight_arrival" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>กรอกเที่ยวบินขาเข้า (Arrival Flight No.)</label>
-                                        <input type="text" id="flight_arrival" name="flight_arrival" class="input-field bg-white req-ocx" >
+                                        <input type="text" id="flight_arrival" name="flight_arrival" class="input-field bg-white req-ocx" placeholder="ระบุหมายเลขเที่ยวบินขาเข้า">
                                         <div class="popup_data w-full hide"></div>
                                         <div class="popup_span w-full hide"></div>
                                         <input type="hidden" id="flight_arrival_data" name="flight_arrival_data">
                                         </div>
                                         <div class="input-group flex-1">
                                         <label for="flight_arrival_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลาเที่ยวบินขาเข้า</label>
-                                        <input type="text" id="flight_arrival_time" name="flight_arrival_time" class="input-field bg-white req-ocx" >
+                                        <input type="text" id="flight_arrival_time" name="flight_arrival_time" class="input-field bg-white req-ocx" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         <div class="input_flight_arrival_time"></div>
                                         </div>
@@ -388,13 +388,13 @@ get_header();
                                     <div class="flex flex-col md:flex-row gap-4 mb-2">
                                         <div class="input-group flex-1">
                                         <label for="pickup_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลารับรถที่สนามบิน</label>
-                                        <input type="text" id="pickup_time" name="pickup_time" class="input-field bg-white req-ocx" >
+                                        <input type="text" id="pickup_time" name="pickup_time" class="input-field bg-white req-ocx" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         <div class="input_pickup_time"></div>
                                         </div>
                                         <div class="input-group flex-1">
                                         <label for="dropoff_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลาส่งรถที่สนามบิน</label>
-                                        <input type="text" id="dropoff_time" name="dropoff_time" class="input-field bg-white req-ocx" >
+                                        <input type="text" id="dropoff_time" name="dropoff_time" class="input-field bg-white req-ocx" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         <div class="input_dropoff_time"></div>
                                         </div>
@@ -402,12 +402,12 @@ get_header();
                                     <div class="flex flex-col md:flex-row gap-4 mb-2">
                                         <div class="input-group flex-1">
                                         <label for="pickup_point" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>ระบุจุดรับรถที่สนามบิน</label>
-                                        <input type="text" id="pickup_point" name="pickup_point" class="input-field bg-white req-ocx" >
+                                        <input type="text" id="pickup_point" name="pickup_point" class="input-field bg-white req-ocx" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         </div>
                                         <div class="input-group flex-1">
                                         <label for="dropoff_point" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>ระบุจุดส่งรถที่สนามบิน</label>
-                                        <input type="text" id="dropoff_point" name="dropoff_point" class="input-field bg-white req-ocx" >
+                                        <input type="text" id="dropoff_point" name="dropoff_point" class="input-field bg-white req-ocx" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         </div>
                                     </div>
@@ -453,23 +453,23 @@ get_header();
                             <div class="font-[600] text-base mb-2">รายละเอียดการค้นหา</div>
                             <div class="flex justify-between text-sm mb-1">
                                 <span>สถานที่</span>
-                                <span id="summary-location" class="font-medium">สนามบินสุวรรณภูมิ</span>
+                                <span id="summary-location" class="font-medium">-</span>
                             </div>
                             <div class="flex justify-between text-sm mb-1">
                                 <span>วันเริ่มต้น (Start date)</span>
-                                <span id="summary-start-date">14/05/2025</span>
+                                <span id="summary-start-date">-</span>
                             </div>
                             <div class="flex justify-between text-sm mb-1">
                                 <span>เวลาเริ่มต้น (Start time)</span>
-                                <span id="summary-start-time">09:00</span>
+                                <span id="summary-start-time">-</span>
                             </div>
                             <div class="flex justify-between text-sm mb-1">
                                 <span>วันสิ้นสุด (End date)</span>
-                                <span id="summary-end-date">16/05/2025</span>
+                                <span id="summary-end-date">-</span>
                             </div>
                             <div class="flex justify-between text-sm">
                                 <span>เวลาสิ้นสุด (End time)</span>
-                                <span id="summary-end-time">18:00</span>
+                                <span id="summary-end-time">-</span>
                             </div>
                         </div>
                         <hr class="my-2">
@@ -504,7 +504,7 @@ get_header();
                             <span>รวม</span>
                             <span id="summary-total" class="text-primary">-</span>
                         </div>
-                        <button type="submit" id="submit-btn" class="hide w-full bg-primary text-white font-[600] py-2 rounded-xl transition-colors text-base hover:opacity-70 submit-button cursor-pointer">
+                        <button type="submit" id="submit-btn" class="hide w-full bg-primary text-white font-[600] py-2 rounded-xl transition-colors text-base hover:opacity-70 submit-button cursor-pointer hidden">
                             จองทันที
                         </button>
                     </div>

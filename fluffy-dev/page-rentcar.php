@@ -195,7 +195,7 @@ get_header();
                                         id="returnHuaHin"
                                         class="select select-bordered w-full input-field text-lg h-12"
                                     >
-                                        <option value="" disabled selected>เลือกสถานที่</option>
+                                        <option value="" selected>เลือกสถานที่</option>
                                         <option value="SuvarnabhumiAirport">สนามบินสุวรรณภูมิ</option>
                                         <option value="DonMueangAirport">สนามบินดอนเมือง</option>
                                     </select>
@@ -311,7 +311,7 @@ get_header();
                         <h2 class="text-2xl font-bold mb-4 text-black">ข้อมูลเที่ยวบิน</h2>
                         <div class="flex flex-col md:flex-row gap-4 mb-4">
                             <div class="flex flex-col flex-1 input-group">
-                                <label for="arrivalFlightNo" class="block text-gray-700 font-medium mb-1"><span class="text-red-500 pr-2">*</span>กรอกชื่อเที่ยวบินขาเข้า (Arrival Flight No.)</label>
+                                <label for="arrivalFlightNo" class="block text-gray-700 font-medium mb-1"><span class="text-red-500 pr-2">*</span>กรอกเที่ยวบินขาเข้า (Arrival Flight No.)</label>
                                 <input
                                     type="text"
                                     id="arrivalFlightNo" 
@@ -328,8 +328,7 @@ get_header();
                                     type="text"
                                     id="arrivalFlightTime"
                                     class="input input-bordered w-full input-field h-12"
-                                    value="09:00"
-                                    placeholder="กรอกเวลาเที่ยวบินขาเข้า"
+                                    placeholder="โปรดระบุ"
                                 />
                                 <div class="popup_span w-full hide"></div>
                                 <div class="ib_arrivalFlightTime"></div>
@@ -337,7 +336,7 @@ get_header();
                         </div>
                         <div class="flex flex-col md:flex-row gap-4 mb-4">
                             <div class="flex flex-col flex-1 relative input-group">
-                                <label for="departureFlightNo" class="block text-gray-700 font-medium mb-1"><span class="text-red-500 pr-2">*</span>กรอกชื่อเที่ยวบินขาออก (Departure Flight No.)</label>
+                                <label for="departureFlightNo" class="block text-gray-700 font-medium mb-1"><span class="text-red-500 pr-2">*</span>กรอกเที่ยวบินขาออก (Departure Flight No.)</label>
                                 <input
                                     type="text"
                                     id="departureFlightNo"
@@ -354,8 +353,7 @@ get_header();
                                     type="text"
                                     id="departureFlightTime"
                                     class="input input-bordered w-full input-field h-12"
-                                    value="09:00"
-                                    placeholder="กรอกเวลาเที่ยวบินขาออก"
+                                    placeholder="โปรดระบุ"
                                 />
                                 <div class="popup_span w-full hide"></div>
                                 <div class="ib_departureFlightTime"></div>
@@ -369,7 +367,7 @@ get_header();
                                     type="text"
                                     id="discountCode"
                                     class="input input-bordered flex-grow input-field h-12"
-                                    placeholder="#EarlyBird20%"
+                                    placeholder="กรอกรหัสคูปอง"
                                 />
                                 <button type="button" id="apply-coupon-btn" class="btn btn-primary">ใช้โค้ด</button>
                             </div>

@@ -288,6 +288,11 @@ function ajax_insert_car_rent_acf() {
                 $total_price = 800; // Default fallback price
             }
             
+            // Check if round trip is selected and multiply price by 2
+            if (isset($sanitized_fields['trip_type']) && $sanitized_fields['trip_type'] == 1) {
+                $total_price = $total_price * 2;
+            }
+            
             // Create WooCommerce order
             $order = wc_create_order();
             

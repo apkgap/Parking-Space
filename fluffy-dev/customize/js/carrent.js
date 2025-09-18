@@ -55,8 +55,8 @@ jQuery(document).ready(function($) {
     // เรียกใช้สำหรับแต่ละ input
     initializeTimePickersBox('departTime', '.ib_departTime', 'เลือกเวลาออกเดินทาง', '09:00');
     initializeTimePickersBox('returnTime', '.ib_returnTime', 'เลือกเวลาออกเดินทาง (ขากลับ)', '18:00');
-    initializeTimePickersBox('arrivalFlightTime', '.ib_arrivalFlightTime', 'เลือกเวลาเที่ยวบินขาเข้า', '09:00');
-    initializeTimePickersBox('departureFlightTime', '.ib_departureFlightTime', 'เลือกเวลาเที่ยวบินขาออก', '09:00');
+    // initializeTimePickersBox('arrivalFlightTime', '.ib_arrivalFlightTime', 'เลือกเวลาเที่ยวบินขาเข้า', '09:00');
+    // initializeTimePickersBox('departureFlightTime', '.ib_departureFlightTime', 'เลือกเวลาเที่ยวบินขาออก', '09:00');
 
     // ตั้งค่าเริ่มต้นสำหรับ input fields
     function setDefaultTimeValues() {

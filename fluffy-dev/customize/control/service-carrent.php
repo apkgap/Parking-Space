@@ -330,7 +330,7 @@ function ajax_search_route_pricing() {
 
             if (returnHuaHinSelect && startPoint) {
                 setSelectByText(returnHuaHinSelect, startPoint);
-                returnHuaHinSelect.disabled = true;
+                // returnHuaHinSelect.disabled = true;
             }
 
             // ตั้งค่าประเภทรถที่เลือก

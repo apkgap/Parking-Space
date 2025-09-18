@@ -1905,7 +1905,7 @@ function generate_parking_booking_email_template($booking_data, $order_code, $po
         $html .= '<div style="margin-top:20px; text-align:center;">
                         <div style="font-weight:bold; color:#111; margin-bottom:10px;">QR Code สำหรับการเข้า-ออก</div>
                         <div style="display:inline-block; padding:15px; background:#ffffff; border:1px solid #e5e7eb; border-radius:8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            <img style="width:200px; height:200px;" alt="QR Code" src="' . esc_url_raw($qr) . '">
+                            <img style="width:200px; height:200px;" alt="QR Code" src="' . esc_url_raw(get_field('qr_code_url', $post_id)) . '">
                         </div>
                         <div style="font-size:12px; color:#666; margin-top:8px;">กรุณาแสดง QR Code นี้ ณ จุดเข้า-ออก</div>
                     </div>';

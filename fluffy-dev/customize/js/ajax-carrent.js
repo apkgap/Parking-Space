@@ -313,7 +313,7 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // Trip type change handler
+    // Trip type change handler - Combined functionality
     $('#trip-type').on('change', function() {
         const isRoundTrip = $(this).is(':checked');
         const $returnSection = $('.return-trip-section'); // Assuming you have a section for return trip
@@ -324,9 +324,39 @@ jQuery(document).ready(function($) {
             $('#returnStart, #returnStartNote, #returnHuaHin, #returnHuaHinNote, #returnDate, #returnTime').prop('required', true);
         } else {
             $returnSection.hide();
-            // Remove required attribute and clear values
-            $('#returnStart, #returnStartNote, #returnHuaHin, #returnHuaHinNote, #returnDate, #returnTime').prop('required', false).val('').removeClass('error');
+            // Remove required attribute but DON'T clear values to preserve user input
+            $('#returnStart, #returnStartNote, #returnHuaHin, #returnHuaHinNote, #returnDate, #returnTime').prop('required', false).removeClass('error');
+            // Only clear error states, not the actual values
         }
+
+        // Update price calculation
+        let basePrice = 0;
+        
+        // รวบรวมข้อมูลจาก hidden inputs ที่สร้างจาก service-carrent ใหม่ทุกครั้ง
+        var currentSelectedPackageData = {};
+        $('.selected-package-hidden').each(function() {
+            var name = $(this).attr('name');
+            var value = $(this).val();
+            if (name && value) {
+                if (name === 'selected_package_price') {
+                    currentSelectedPackageData.price = value;
+                }
+            }
+        });
+        
+        // ดึงราคาจาก currentSelectedPackageData ถ้ามี
+        if (currentSelectedPackageData && currentSelectedPackageData.price) {
+            var priceText = currentSelectedPackageData.price.replace(/[^\d]/g, '');
+            basePrice = parseFloat(priceText) || 0;
+        }
+        
+        // ถ้าเป็น round trip ให้คูณ 2
+        if (isRoundTrip) {
+            pricePerTrip = basePrice * 2;
+        } else {
+            pricePerTrip = basePrice;
+        }
+        updateSummaryPrice();
     });
 
     function validateEmailField() {
@@ -530,12 +560,6 @@ jQuery(document).ready(function($) {
             $('#coupon-message').addClass('hidden');
             updateSummaryPrice();
         }
-    });
-
-    // เรียกทุกครั้งที่คำนวณราคาใหม่
-    // Update price summary when trip type changes
-    $('#trip-type').on('change', function() {
-        updateSummaryPrice();
     });
 
     // Form submission protection - prevent Enter key submission
