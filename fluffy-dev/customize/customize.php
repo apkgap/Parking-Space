@@ -1442,40 +1442,22 @@ function insert_parking_booking() {
         }
     }
 
-    // Send email confirmation
-    if (!empty($profile['email'])) {
-        // Generate email content
-        $email_content = generate_parking_booking_email_template($data, $order_code, $post_id);
-        
-        // Email headers
-        $headers = array(
-            'Content-Type: text/html; charset=UTF-8',
-            'From: ' . get_bloginfo('name') . ' <' . get_option('admin_email') . '>'
-        );
-        
-        // Send email to customer
-        wp_mail($profile['email'], 'ยืนยันการจองที่จอดรถ - ' . $order_code, $email_content, $headers);
-        
-        // Send email to admin
-        wp_mail(get_option('admin_email'), 'มีการจองที่จอดรถใหม่ - ' . $order_code, $email_content, $headers);
-    }
-
-    $response_data = [
-        'message' => 'บันทึกสำเร็จ',
-        'post_id' => $post_id,
-        'order_code' => $order_code,
-        'qr_code_url' => esc_url_raw($qr),
-        'input_data' => $data
-    ];
+$response_data = [
+    'message' => 'บันทึกสำเร็จ',
+    'post_id' => $post_id,
+    'order_code' => $order_code,
+    'qr_code_url' => esc_url_raw($qr),
+    'input_data' => $data
+];
     
-    // Add WooCommerce data if order was created
-    if ($wc_order_id && $checkout_url) {
-        $response_data['woocommerce_order_id'] = $wc_order_id;
-        $response_data['checkout_url'] = $checkout_url;
-        $response_data['redirect_to_checkout'] = true;
-    }
+// Add WooCommerce data if order was created
+if ($wc_order_id && $checkout_url) {
+    $response_data['woocommerce_order_id'] = $wc_order_id;
+    $response_data['checkout_url'] = $checkout_url;
+    $response_data['redirect_to_checkout'] = true;
+}
 
-    wp_send_json_success($response_data);
+wp_send_json_success($response_data);
 }
 
 // ========= WooCommerce Order Hooks for Parking Booking =========
@@ -1524,8 +1506,30 @@ function update_parking_booking_on_order_complete($order_id) {
         
         // Redirect to thank you page after payment completion
         $customer_email = '';
-        if ($booking_data && isset($booking_data['email'])) {
-            $customer_email = $booking_data['email'];
+        
+        // Try to get customer email from multiple sources
+        // 1. From WooCommerce order billing email
+        $customer_email = $order->get_billing_email();
+        
+        // 2. If not found, try from parking booking ACF fields
+        if (empty($customer_email)) {
+            $profile_data = get_field('profile_information', $parking_booking_id);
+            if ($profile_data && isset($profile_data['email'])) {
+                $customer_email = $profile_data['email'];
+            }
+        }
+        
+        // 3. If still not found, try from order meta
+        if (empty($customer_email)) {
+            $booking_data = $order->get_meta('parking_booking_data');
+            if ($booking_data) {
+                if (is_string($booking_data)) {
+                    $booking_data = json_decode($booking_data, true);
+                }
+                if (isset($booking_data['profile']['email'])) {
+                    $customer_email = $booking_data['profile']['email'];
+                }
+            }
         }
         
         $thank_you_url = home_url('/thank-you/');
@@ -1542,46 +1546,105 @@ function update_parking_booking_on_order_complete($order_id) {
 // Function to send parking confirmation email after payment
 function send_parking_confirmation_email($parking_booking_id, $order_id) {
     $order = wc_get_order($order_id);
-    if (!$order) return;
-    
-    $booking_data = get_field('booking_information', $parking_booking_id);
-    $profile_data = get_field('profile_information', $parking_booking_id);
-    
-    if (!empty($profile_data['email'])) {
-        $order_code = $order->get_meta('parking_order_code');
-        $booking_url = $order->get_meta('parking_booking_url');
-        $qr_code_url = $order->get_meta('parking_qr_code_url');
-        
-        $subject = 'ยืนยันการชำระเงิน - การจองที่จอดรถ ' . $order_code;
-        
-        $message = "
-        <h2>การชำระเงินเสร็จสิ้น</h2>
-        <p>เรียน คุณ{$profile_data['fullname']}</p>
-        <p>การชำระเงินสำหรับการจองที่จอดรถของคุณเสร็จสิ้นแล้ว</p>
-        
-        <h3>รายละเอียดการจอง:</h3>
-        <ul>
-            <li><strong>รหัสการจอง:</strong> {$order_code}</li>
-            <li><strong>WooCommerce Order ID:</strong> {$order_id}</li>
-            <li><strong>สถานะ:</strong> ยืนยันแล้ว</li>
-        </ul>
-        ";
-        
-        if ($booking_url) {
-            $message .= "<p><a href='{$booking_url}'>ดูรายละเอียดการจอง</a></p>";
-        }
-        
-        if ($qr_code_url) {
-            $message .= "<p><strong>QR Code:</strong> <img src='{$qr_code_url}' alt='QR Code' style='max-width: 200px;'></p>";
-        }
-        
-        $headers = array(
-            'Content-Type: text/html; charset=UTF-8',
-            'From: ' . get_bloginfo('name') . ' <' . get_option('admin_email') . '>'
-        );
-        
-        wp_mail($profile_data['email'], $subject, $message, $headers);
+    if (!$order) {
+        error_log("WooCommerce order not found for ID: $order_id");
+        return;
     }
+    
+    // Get order code
+    $order_code = $order->get_meta('parking_order_code');
+    if (!$order_code) {
+        error_log("No parking order code found for order: $order_id");
+        return;
+    }
+    
+    // Try to reconstruct booking data from ACF fields
+    $booking_data = array();
+    
+    // Get profile information
+    $profile_data = get_field('profile_information', $parking_booking_id);
+    if (!$profile_data) {
+        // Fallback: construct from individual fields
+        $profile_data = array(
+            'fullname' => get_field('fullname_park', $parking_booking_id),
+            'email' => get_field('email_park', $parking_booking_id),
+            'phone' => get_field('phone_park', $parking_booking_id),
+            'lineid' => get_field('line_id_park', $parking_booking_id)
+        );
+    }
+    
+    // Check if we have customer email
+    if (empty($profile_data['email'])) {
+        // Try to get email from WooCommerce order
+        $customer_email = $order->get_billing_email();
+        if (!empty($customer_email)) {
+            $profile_data['email'] = $customer_email;
+        } else {
+            error_log("No customer email found for parking booking order: $order_code");
+            return;
+        }
+    }
+    
+    $booking_data['profile'] = $profile_data;
+    $booking_data['startDate'] = get_field('start_date', $parking_booking_id);
+    $booking_data['endDate'] = get_field('end_date', $parking_booking_id);
+    $booking_data['startTime'] = get_field('start_time', $parking_booking_id);
+    $booking_data['endTime'] = get_field('end_time', $parking_booking_id);
+    $booking_data['location'] = get_field('location_park', $parking_booking_id);
+    
+    // Get vehicle information
+    $vehicle_info = get_field('vehicle_info', $parking_booking_id);
+    if ($vehicle_info) {
+        $booking_data['selectedParkingSpaces'] = array();
+        foreach ($vehicle_info as $vehicle) {
+            $booking_data['selectedParkingSpaces'][] = array(
+                'licensePlate' => $vehicle['license_plate'] ?? '',
+                'otherTypeCar' => $vehicle['other_type_car'] ?? '',
+                'parking_post_id' => $vehicle['booked_parking_space'] ?? '',
+                'parking_id' => $vehicle['parking_slot_id'] ?? '',
+                'id' => $vehicle['parking_slot'] ?? ''
+            );
+        }
+    }
+    
+    // Get addon information
+    $addon_info = get_field('addon_information', $parking_booking_id);
+    if ($addon_info) {
+        $booking_data['addon'] = array(
+            'servicePickup' => !empty($addon_info['service_pickup']),
+            'serviceValet' => !empty($addon_info['service_valet']),
+            'sending' => array(
+                'flightDepart' => $addon_info['sending_flight']['depart'] ?? '',
+                'flightDepartTime' => $addon_info['sending_flight']['depart_time'] ?? '',
+                'flightArrival' => $addon_info['sending_flight']['arrival'] ?? '',
+                'flightArrivalTime' => $addon_info['sending_flight']['arrival_time'] ?? '',
+                'pickupTime' => $addon_info['sending_flight']['pickup_time'] ?? '',
+                'dropoffTime' => $addon_info['sending_flight']['dropoff_time'] ?? '',
+                'pickupPoint' => $addon_info['sending_flight']['pickup_point'] ?? '',
+                'dropoffPoint' => $addon_info['sending_flight']['dropoff_point'] ?? '',
+                'adultCount' => $addon_info['sending_flight']['adult_count'] ?? '',
+                'childCount' => $addon_info['sending_flight']['child_count'] ?? '',
+                'baggageCount' => $addon_info['sending_flight']['baggage_count'] ?? '',
+                'pickupNote' => $addon_info['sending_flight']['pickup_note'] ?? ''
+            ),
+            'parking' => array(
+                'flightDepart' => $addon_info['parking_car']['depart'] ?? '',
+                'flightDepartTime' => $addon_info['parking_car']['depart_time'] ?? '',
+                'flightArrival' => $addon_info['parking_car']['arrival'] ?? '',
+                'flightArrivalTime' => $addon_info['parking_car']['arrival_time'] ?? '',
+                'pickupTime' => $addon_info['parking_car']['pickup_time'] ?? '',
+                'dropoffTime' => $addon_info['parking_car']['dropoff_time'] ?? '',
+                'pickupPoint' => $addon_info['parking_car']['pickup_point'] ?? '',
+                'dropoffPoint' => $addon_info['parking_car']['dropoff_point'] ?? '',
+                'pickupNote' => $addon_info['parking_car']['pickup_note'] ?? ''
+            )
+        );
+    }
+    
+    // Use the beautiful email template function
+    generate_parking_booking_email_template($booking_data, $order_code, $parking_booking_id, $profile_data['email']);
+    
+    error_log("Parking confirmation email sent for order: $order_code to: " . $profile_data['email']);
 }
 
 // Function to handle redirect after payment completion for parking
@@ -1712,7 +1775,7 @@ function display_parking_booking_details_in_admin($order) {
 
 // ========= Parking Booking Email Template =========
 
-function generate_parking_booking_email_template($booking_data, $order_code, $post_id) {
+function generate_parking_booking_email_template($booking_data, $order_code, $post_id, $customer_email = null) {
     $site_name = get_bloginfo('name');
     $site_url = get_bloginfo('url');
     $admin_email = get_option('admin_email');
@@ -2060,165 +2123,45 @@ function generate_parking_booking_email_template($booking_data, $order_code, $po
 </body>
 </html>';
     
+    // If customer email is provided, send the email
+    if ($customer_email) {
+        // Email headers
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ' . $site_name . ' <' . $admin_email . '>'
+        );
+        
+        // Email subject
+        $subject = 'ยืนยันการจองที่จอดรถ - ' . $order_code . ' - ' . $site_name;
+        
+        try {
+            // Send email to customer
+            $customer_sent = wp_mail($customer_email, $subject, $html, $headers);
+            
+            // Send email to admin with different subject
+            $admin_subject = 'มีการจองที่จอดรถใหม่ - ' . $order_code;
+            $admin_sent = wp_mail($admin_email, $admin_subject, $html, $headers);
+            
+            // Log email sending results
+            if ($customer_sent) {
+                error_log("Parking booking email sent successfully to customer: $customer_email for order: $order_code");
+            } else {
+                error_log("Failed to send parking booking email to customer: $customer_email for order: $order_code");
+            }
+            
+            if ($admin_sent) {
+                error_log("Parking booking email sent successfully to admin: $admin_email for order: $order_code");
+            } else {
+                error_log("Failed to send parking booking email to admin: $admin_email for order: $order_code");
+            }
+            
+        } catch (Exception $e) {
+            error_log("Error sending parking booking emails for order $order_code: " . $e->getMessage());
+        }
+    }
+    
     return $html;
 }
-
-// Test function for parking booking email template
-function test_parking_booking_email() {
-    // Sample booking data for testing
-    $booking_data = [
-        'profile' => [
-            'fullname' => 'John Doe',
-            'email' => 'john.doe@example.com',
-            'phone' => '0812345678',
-            'lineid' => 'johndoe_line'
-        ],
-        'startDate' => '2024-06-15',
-        'startTime' => '09:00',
-        'endDate' => '2024-06-17',
-        'endTime' => '18:00',
-        'location' => 15, // Sample location ID
-        'addon' => [
-            'servicePickup' => true,
-            'serviceValet' => false,
-            'sending' => [
-                'flightDepart' => 'TG123',
-                'flightDepartTime' => '08:30',
-                'flightArrival' => 'TG456',
-                'flightArrivalTime' => '10:45',
-                'pickupTime' => '07:00',
-                'dropoffTime' => '11:30',
-                'pickupPoint' => 'Home Address',
-                'dropoffPoint' => 'Airport Terminal 1',
-                'adultCount' => '2',
-                'childCount' => '1',
-                'baggageCount' => '3',
-                'pickupNote' => 'Please wait at the lobby.'
-            ],
-            'parking' => [
-                'flightDepart' => 'TG789',
-                'flightDepartTime' => '16:30',
-                'flightArrival' => 'TG012',
-                'flightArrivalTime' => '18:45',
-                'pickupTime' => '19:30',
-                'dropoffTime' => '15:00',
-                'pickupPoint' => 'Airport Terminal 2',
-                'dropoffPoint' => 'Home Address',
-                'pickupNote' => 'Call upon arrival.'
-            ]
-        ],
-        'selectedParkingSpaces' => [
-            [
-                'licensePlate' => 'AB1234',
-                'otherTypeCar' => 'Sedan',
-                'parking_id' => 'P-101'
-            ],
-            [
-                'licensePlate' => 'CD5678',
-                'otherTypeCar' => 'SUV',
-                'parking_id' => 'P-102'
-            ]
-        ]
-    ];
-    
-    // Sample order code and post ID
-    $order_code = 'ORD-20240615-001';
-    $post_id = 123;
-    
-    // Generate the email template
-    $email_html = generate_parking_booking_email_template($booking_data, $order_code, $post_id);
-    
-    // Output the email template
-    echo $email_html;
-}
-
-// ========= 2C2P Payment Gateway Integration =========
-
-// add_action('wp_ajax_initiate_payment', 'handle_2c2p_payment');
-// add_action('wp_ajax_nopriv_initiate_payment', 'handle_2c2p_payment');
-
-// function handle_2c2p_payment() {
-//     if (!isset($_POST['booking_id']) || !isset($_POST['fine'])) {
-//         wp_send_json_error('Missing payment data.');
-//     }
-
-//     $booking_id = intval($_POST['booking_id']);
-//     $fine = floatval($_POST['fine']);
-//     $order_code = get_field('order_code', $booking_id);
-
-//     if (!$order_code) {
-//         wp_send_json_error('Invalid booking.');
-//     }
-
-//     // --- 2C2P Configuration ---
-//     // IMPORTANT: Replace with your actual Merchant ID and Secret Key
-//     $merchant_id = get_field('2c2p_merchant_id', 'option');
-//     $secret_key = get_field('2c2p_secret_key', 'option');
-//     $payment_url = 'https://demo2.2c2p.com/2C2PFrontEnd/Redirect/V3/payment'; // Use production URL for live
-
-//     // --- Payment Details ---
-//     $version = '8.5';
-//     $amount = str_pad(number_format($fine, 2, '', ''), 12, '0', STR_PAD_LEFT);
-//     $currency = '764'; // THB currency code
-//     $desc = 'Fine for booking ' . $order_code;
-//     $invoice_no = $order_code . '-' . time(); // Unique invoice number
-
-//     // --- Response URLs ---
-//     $frontend_url = home_url('/payment-complete/');
-//     $backend_url = home_url('/wp-json/custom/v1/payment_callback');
-
-//     // --- Create Hash ---
-//     $string_to_hash = $version . $merchant_id . $invoice_no . $amount . $currency . $desc . $frontend_url . $backend_url;
-//     $hash = hash_hmac('sha256', $string_to_hash, $secret_key, false);
-
-//     // --- Build Redirect Form ---
-//     $form_fields = [
-//         'version' => $version,
-//         'merchant_id' => $merchant_id,
-//         'invoice_no' => $invoice_no,
-//         'amount' => $amount,
-//         'currency' => $currency,
-//         'transaction_ref' => $booking_id, // Pass booking ID for reference
-//         'desc' => $desc,
-//         'frontend_url' => $frontend_url,
-//         'backend_url' => $backend_url,
-//         'hash' => $hash,
-//     ];
-
-//     $form_html = '<form id="payment_form" method="POST" action="' . esc_url($payment_url) . '">';
-//     foreach ($form_fields as $key => $value) {
-//         $form_html .= '<input type="hidden" name="' . esc_attr($key) . '" value="' . esc_attr($value) . '">';
-//     }
-//     $form_html .= '</form>';
-//     $form_html .= '<script>document.getElementById("payment_form").submit();</script>';
-
-//     wp_send_json_success(['redirect_form' => $form_html]);
-// }
-
-// add_action('rest_api_init', function () {
-//     register_rest_route('custom/v1', '/payment_callback', array(
-//         'methods' => 'POST',
-//         'callback' => 'handle_2c2p_callback',
-//         'permission_callback' => '__return_true',
-//     ));
-// });
-
-// function handle_2c2p_callback($request) {
-//     $params = $request->get_params();
-//     $booking_id = intval($params['transaction_ref'] ?? 0);
-//     $status = $params['payment_status'] ?? '';
-
-//     if ($booking_id && $status === '000') { // '000' indicates success
-//         // Update booking status to 'paid'
-//         update_field('payment_status', 'paid', $booking_id);
-//         update_field('booking_status', 'checked-out', $booking_id);
-//     }
-
-//     // Log the response for debugging
-//     error_log('2C2P Callback: ' . print_r($params, true));
-
-//     return new WP_REST_Response('Callback received.', 200);
-// }
 
 // REST API: Tabien Rod endpoints
 add_action('rest_api_init', function () {
@@ -2453,5 +2396,251 @@ function update_theme_settings_data( $request ) {
 
 
 
-?>
+// ========= WooCommerce Order Complete Hook =========
 
+/**
+ * Send parking booking email when WooCommerce order is completed
+ */
+function send_parking_booking_email_on_order_complete($order_id) {
+    // Get WooCommerce order
+    $order = wc_get_order($order_id);
+    if (!$order) {
+        return;
+    }
+
+    // Check if this is a parking booking order
+    $order_meta = $order->get_meta_data();
+    $booking_data = null;
+    $order_code = null;
+    $post_id = null;
+
+    // Look for parking booking data in order meta
+    foreach ($order_meta as $meta) {
+        $key = $meta->get_data()['key'];
+        $value = $meta->get_data()['value'];
+        
+        if ($key === 'parking_booking_data') {
+            $booking_data = is_string($value) ? json_decode($value, true) : $value;
+        }
+        if ($key === 'parking_order_code') {
+            $order_code = $value;
+        }
+        if ($key === 'parking_post_id') {
+            $post_id = $value;
+        }
+    }
+
+    // If no parking booking data found, try alternative methods
+    if (!$booking_data || !$order_code) {
+        // Try to get from order items
+        foreach ($order->get_items() as $item_id => $item) {
+            $item_booking_data = $item->get_meta('parking_booking_data');
+            $item_order_code = $item->get_meta('parking_order_code');
+            $item_post_id = $item->get_meta('parking_post_id');
+            
+            if ($item_booking_data) {
+                $booking_data = is_string($item_booking_data) ? json_decode($item_booking_data, true) : $item_booking_data;
+            }
+            if ($item_order_code) {
+                $order_code = $item_order_code;
+            }
+            if ($item_post_id) {
+                $post_id = $item_post_id;
+            }
+            
+            if ($booking_data && $order_code) {
+                break;
+            }
+        }
+    }
+
+    // If still no booking data, this might not be a parking order
+    if (!$booking_data || !$order_code) {
+        error_log("No parking booking data found for order ID: $order_id");
+        return;
+    }
+
+    // Generate and send the email
+    try {
+        $email_content = generate_parking_booking_email_template($booking_data, $order_code, $post_id);
+        
+        // Get customer email
+        $customer_email = $order->get_billing_email();
+        if (!$customer_email && isset($booking_data['profile']['email'])) {
+            $customer_email = $booking_data['profile']['email'];
+        }
+        
+        if (!$customer_email) {
+            error_log("No customer email found for parking booking order ID: $order_id");
+            return;
+        }
+        
+        // Email subject
+        $subject = 'ยืนยันการจองที่จอดรถ - ' . $order_code . ' - ' . get_bloginfo('name');
+        
+        // Email headers
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ' . get_bloginfo('name') . ' <' . get_option('admin_email') . '>'
+        );
+        
+        // Send email
+        $email_sent = wp_mail($customer_email, $subject, $email_content, $headers);
+        
+        if ($email_sent) {
+            // Log successful email
+            error_log("Parking booking confirmation email sent successfully for order ID: $order_id to: $customer_email");
+            
+            // Add order note
+            $order->add_order_note('Parking booking confirmation email sent to: ' . $customer_email);
+        } else {
+            error_log("Failed to send parking booking confirmation email for order ID: $order_id");
+            
+            // Add order note
+            $order->add_order_note('Failed to send parking booking confirmation email to: ' . $customer_email);
+        }
+        
+    } catch (Exception $e) {
+        error_log("Error sending parking booking email for order ID: $order_id - " . $e->getMessage());
+        
+        // Add order note
+        $order->add_order_note('Error sending parking booking confirmation email: ' . $e->getMessage());
+    }
+}
+
+// Hook into WooCommerce order completed
+add_action('woocommerce_order_status_completed', 'send_parking_booking_email_on_order_complete');
+
+// Also hook into order processing (in case you want to send email earlier)
+// add_action('woocommerce_order_status_processing', 'send_parking_booking_email_on_order_complete');
+
+/**
+ * Alternative hook for when payment is completed (before order status changes)
+ */
+function send_parking_booking_email_on_payment_complete($order_id) {
+    // Get WooCommerce order
+    $order = wc_get_order($order_id);
+    if (!$order) {
+        error_log("WooCommerce order not found for ID: $order_id");
+        return;
+    }
+    
+    // Check if this is a parking booking order
+    $parking_booking_id = $order->get_meta('parking_booking_id');
+    if (!$parking_booking_id) {
+        error_log("Not a parking booking order: $order_id");
+        return;
+    }
+    
+    // Only send if order is paid and not already processed
+    if ($order->is_paid() && !$order->get_meta('_parking_email_sent')) {
+        // Mark as processed to avoid duplicate emails
+        $order->update_meta_data('_parking_email_sent', true);
+        $order->save();
+        
+        // Get booking data and order code
+        $order_code = $order->get_meta('parking_order_code');
+        $customer_email = $order->get_billing_email();
+        
+        // Try to reconstruct booking data from ACF fields
+        $booking_data = array();
+        
+        // Get profile information
+        $profile_data = get_field('profile_information', $parking_booking_id);
+        if (!$profile_data) {
+            // Fallback: construct from individual fields
+            $profile_data = array(
+                'fullname' => get_field('fullname_park', $parking_booking_id),
+                'email' => get_field('email_park', $parking_booking_id),
+                'phone' => get_field('phone_park', $parking_booking_id),
+                'lineid' => get_field('line_id_park', $parking_booking_id)
+            );
+        }
+        
+        $booking_data['profile'] = $profile_data;
+        $booking_data['startDate'] = get_field('start_date', $parking_booking_id);
+        $booking_data['endDate'] = get_field('end_date', $parking_booking_id);
+        $booking_data['startTime'] = get_field('start_time', $parking_booking_id);
+        $booking_data['endTime'] = get_field('end_time', $parking_booking_id);
+        $booking_data['location'] = get_field('location_park', $parking_booking_id);
+        
+        // Get vehicle information
+        $vehicle_info = get_field('vehicle_info', $parking_booking_id);
+        if ($vehicle_info) {
+            $booking_data['selectedParkingSpaces'] = array();
+            foreach ($vehicle_info as $vehicle) {
+                $booking_data['selectedParkingSpaces'][] = array(
+                    'licensePlate' => $vehicle['license_plate'] ?? '',
+                    'otherTypeCar' => $vehicle['other_type_car'] ?? '',
+                    'parking_post_id' => $vehicle['booked_parking_space'] ?? '',
+                    'parking_id' => $vehicle['parking_slot_id'] ?? '',
+                    'id' => $vehicle['parking_slot'] ?? ''
+                );
+            }
+        }
+        
+        // Get addon information
+        $addon_info = get_field('addon_information', $parking_booking_id);
+        if ($addon_info) {
+            $booking_data['addon'] = array(
+                'servicePickup' => !empty($addon_info['service_pickup']),
+                'serviceValet' => !empty($addon_info['service_valet']),
+                'sending' => array(
+                    'flightDepart' => $addon_info['sending_flight']['depart'] ?? '',
+                    'flightDepartTime' => $addon_info['sending_flight']['depart_time'] ?? '',
+                    'flightArrival' => $addon_info['sending_flight']['arrival'] ?? '',
+                    'flightArrivalTime' => $addon_info['sending_flight']['arrival_time'] ?? '',
+                    'pickupTime' => $addon_info['sending_flight']['pickup_time'] ?? '',
+                    'dropoffTime' => $addon_info['sending_flight']['dropoff_time'] ?? '',
+                    'pickupPoint' => $addon_info['sending_flight']['pickup_point'] ?? '',
+                    'dropoffPoint' => $addon_info['sending_flight']['dropoff_point'] ?? '',
+                    'adultCount' => $addon_info['sending_flight']['adult_count'] ?? '',
+                    'childCount' => $addon_info['sending_flight']['child_count'] ?? '',
+                    'baggageCount' => $addon_info['sending_flight']['baggage_count'] ?? '',
+                    'pickupNote' => $addon_info['sending_flight']['pickup_note'] ?? ''
+                ),
+                'parking' => array(
+                    'flightDepart' => $addon_info['parking_car']['depart'] ?? '',
+                    'flightDepartTime' => $addon_info['parking_car']['depart_time'] ?? '',
+                    'flightArrival' => $addon_info['parking_car']['arrival'] ?? '',
+                    'flightArrivalTime' => $addon_info['parking_car']['arrival_time'] ?? '',
+                    'pickupTime' => $addon_info['parking_car']['pickup_time'] ?? '',
+                    'dropoffTime' => $addon_info['parking_car']['dropoff_time'] ?? '',
+                    'pickupPoint' => $addon_info['parking_car']['pickup_point'] ?? '',
+                    'dropoffPoint' => $addon_info['parking_car']['dropoff_point'] ?? '',
+                    'pickupNote' => $addon_info['parking_car']['pickup_note'] ?? ''
+                )
+            );
+        }
+        
+        // Use customer email from order if profile email is empty
+        if (empty($booking_data['profile']['email']) && !empty($customer_email)) {
+            $booking_data['profile']['email'] = $customer_email;
+        }
+        
+        // Send the email using our email template function
+        if (!empty($booking_data['profile']['email'])) {
+            generate_parking_booking_email_template($booking_data, $order_code, $parking_booking_id, $booking_data['profile']['email']);
+            error_log("Parking booking payment complete email sent for order: $order_code to: " . $booking_data['profile']['email']);
+        } else {
+            error_log("No customer email found for parking booking order: $order_code");
+        }
+    }
+}
+
+// Hook into payment completed
+add_action('woocommerce_payment_complete', 'send_parking_booking_email_on_payment_complete');
+
+/**
+ * Manual trigger function for testing
+ */
+function manually_send_parking_booking_email($order_id) {
+    if (current_user_can('administrator')) {
+        send_parking_booking_email_on_order_complete($order_id);
+        return "Email sent for order ID: $order_id";
+    }
+    return "Permission denied";
+}
+
+
+?>

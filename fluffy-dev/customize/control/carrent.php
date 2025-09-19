@@ -375,9 +375,6 @@ function ajax_insert_car_rent_acf() {
         }
     }
 
-    // Send confirmation email
-    send_car_rental_confirmation_email($sanitized_fields, $booking_ref, $post_id);
-
     $response_data = [
         'message' => 'Booking created successfully!',
         'post_id' => $post_id,
@@ -402,10 +399,13 @@ function ajax_insert_car_rent_acf() {
 
 // WooCommerce Order Hooks for Car Rental Booking
 add_action('woocommerce_order_status_completed', 'update_carrent_booking_on_order_complete');
-add_action('woocommerce_order_status_processing', 'update_carrent_booking_on_order_complete');
+// add_action('woocommerce_order_status_processing', 'update_carrent_booking_on_order_complete');
 
 // Hook to redirect after payment completion
 add_action('woocommerce_thankyou', 'carrent_redirect_after_payment', 10, 1);
+
+// Hook into payment completed for immediate email sending
+add_action('woocommerce_payment_complete', 'send_carrent_booking_email_on_payment_complete');
 
 function update_carrent_booking_on_order_complete($order_id) {
     $order = wc_get_order($order_id);
@@ -464,55 +464,338 @@ function update_carrent_booking_on_order_complete($order_id) {
     }
 }
 
-// Function to send car rental confirmation email after payment
-function send_carrent_confirmation_email($carrent_booking_id, $order_id) {
-    $order = wc_get_order($order_id);
-    if (!$order) return;
+// Function to generate car rental booking email template
+function generate_carrent_booking_email_template($booking_data, $order_code, $post_id, $customer_email = null) {
+    $site_name = get_bloginfo('name');
+    $site_url = get_bloginfo('url');
+    $admin_email = get_option('admin_email');
     
-    $customer_email = get_field('customer_email', $carrent_booking_id);
-    $customer_name = get_field('customer_name', $carrent_booking_id);
+    // Extract customer information
+    $full_name = isset($booking_data['profile']['fullname']) ? esc_html($booking_data['profile']['fullname']) : '';
+    $email = isset($booking_data['profile']['email']) ? esc_html($booking_data['profile']['email']) : '';
+    $phone = isset($booking_data['profile']['phone']) ? esc_html($booking_data['profile']['phone']) : '';
+    $line_id = isset($booking_data['profile']['lineid']) ? esc_html($booking_data['profile']['lineid']) : '';
     
-    if (!$customer_email && function_exists('get_field')) {
-        // Try to get from personal_information structure
-        $personal_info = get_field('personal_information', $carrent_booking_id);
-        if ($personal_info && isset($personal_info['email'])) {
-            $customer_email = $personal_info['email'];
-        }
-        if ($personal_info && isset($personal_info['full_name'])) {
-            $customer_name = $personal_info['full_name'];
+    // Extract booking dates and times
+    $start_date = isset($booking_data['startDate']) ? esc_html($booking_data['startDate']) : '';
+    $start_time = isset($booking_data['startTime']) ? esc_html($booking_data['startTime']) : '';
+    $end_date = isset($booking_data['endDate']) ? esc_html($booking_data['endDate']) : '';
+    $end_time = isset($booking_data['endTime']) ? esc_html($booking_data['endTime']) : '';
+    
+    // Extract pickup and return locations
+    $pickup_location = isset($booking_data['pickupLocation']) ? esc_html($booking_data['pickupLocation']) : '';
+    $return_location = isset($booking_data['returnLocation']) ? esc_html($booking_data['returnLocation']) : '';
+    
+    // Extract vehicle information
+    $vehicle_type = isset($booking_data['vehicleType']) ? esc_html($booking_data['vehicleType']) : '';
+    $total_price = isset($booking_data['totalPrice']) ? esc_html($booking_data['totalPrice']) : '';
+    
+    $html = '<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <title>Car Rental Booking Confirmation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    @media screen and (max-width:600px){
+      .container{width:100% !important}
+      .px-24{padding-left:16px !important; padding-right:16px !important}
+      .py-32{padding-top:20px !important; padding-bottom:20px !important}
+      .stack{display:block !important; width:100% !important}
+      .text-center-sm{text-align:center !important}
+    }
+    a[x-apple-data-detectors]{color:inherit !important; text-decoration:none !important;}
+    body {margin:0; padding:0; background:#f2f4f6; font-family:Arial, Helvetica, sans-serif;}
+    table {border-collapse: collapse;}
+  </style>
+</head>
+<body style="margin:0; padding:0; background:#f2f4f6; font-family:Arial, Helvetica, sans-serif;">
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tr>
+      <td align="center" style="padding:0 12px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px; max-width:600px; background:#ffffff; border-radius:8px; overflow:hidden;">
+          
+          <!-- Header -->
+          <tr>
+            <td bgcolor="#e67e22" style="padding:18px 24px; color:#ffffff;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td class="text-center-sm" style="font-weight:bold; font-size:20px;">' . $site_name . '</td>
+                  <td align="right" class="text-center-sm">
+                    <a href="' . $site_url . '" style="color:#ffffff; text-decoration:none; font-size:14px;">Car Rental ▸</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Title -->
+           <tr>
+            <td align="center" class="px-24 py-32" style="padding:28px 24px;">
+              <img src="' . get_stylesheet_directory_uri() . '/customize/img/logo-okpark.jpg" width="60" height="60" alt="Success" style="display:block; margin:0 auto 12px; border-radius:32px;">
+              <div style="font-size:22px; font-weight:bold; color:#333;">ขอบคุณสำหรับการจองรถเช่า!</div>
+              <div style="font-size:13px; color:#666;">เราได้รับคำสั่งซื้อแล้วและกำลังจัดเตรียมรถให้คุณ</div>
+            </td>
+          </tr>
+
+          <!-- Order summary -->
+          <tr>
+            <td class="px-24" style="padding:0 24px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e5e7eb; border-radius:6px;">
+                <tr>
+                  <td colspan="2" style="padding:16px; font-weight:bold; color:#111827;">สรุปรายการจองรถเช่า</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">หมายเลขออเดอร์</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $order_code . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">ชื่อผู้จอง</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $full_name . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">อีเมล</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $email . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">เบอร์โทรศัพท์</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $phone . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">LINE ID</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $line_id . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">ประเภทรถ</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $vehicle_type . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">สถานที่รับรถ</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $pickup_location . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">สถานที่คืนรถ</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $return_location . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">วันที่รับรถ</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $start_date . ' ' . $start_time . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">วันที่คืนรถ</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $end_date . ' ' . $end_time . '</td>
+                </tr>';
+    
+    if (!empty($total_price)) {
+        $html .= '<tr>
+                  <td style="padding:12px 16px; color:#666; font-weight:bold;">ราคารวม</td>
+                  <td align="right" style="padding:12px 16px; color:#111; font-weight:bold;">' . number_format($total_price) . ' บาท</td>
+                </tr>';
+    }
+    
+    $html .= '              </table>
+            </td>
+          </tr>';
+    
+    $html .= '
+          <!-- Promo block -->
+          <tr>
+            <td bgcolor="#e67e22" align="center" style="padding:28px 24px; color:#ffffff;">
+              <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">ขอบคุณที่ใช้บริการของเรา!</div>
+              <div style="font-size:14px; margin-bottom:15px;">หากมีข้อสงสัยกรุณาติดต่อ: ' . $admin_email . '</div>
+              <a href="' . $site_url . '" 
+                 style="display:inline-block; background:#d35400; color:#ffffff; text-decoration:none; 
+                        padding:12px 22px; border-radius:4px; font-weight:bold; font-size:14px;">
+                กลับไปที่เว็บไซต์
+              </a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding:24px; background:#f7f7f7;">
+              <div style="font-size:12px; color:#666;">
+                <div><strong>' . $site_name . '</strong> • ' . $admin_email . '</div>
+                <div style="margin-top:8px;">
+                  <a href="' . $site_url . '/preferences" style="color:#e67e22; text-decoration:none;">ตั้งค่าการรับอีเมล</a> • 
+                  <a href="' . $site_url . '/unsubscribe" style="color:#e67e22; text-decoration:none;">ยกเลิกรับข่าวสาร</a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>';
+
+    // If customer email is provided, send the email
+    if ($customer_email) {
+        // Email headers
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ' . $site_name . ' <' . $admin_email . '>'
+        );
+        
+        // Email subject
+        $subject = 'ยืนยันการจองรถเช่า - ' . $order_code . ' - ' . $site_name;
+        
+        try {
+            // Send email to customer
+            $customer_sent = wp_mail($customer_email, $subject, $html, $headers);
+            
+            // Send email to admin with different subject
+            $admin_subject = 'มีการจองรถเช่าใหม่ - ' . $order_code;
+            $admin_sent = wp_mail($admin_email, $admin_subject, $html, $headers);
+            
+            // Log email sending results
+            if ($customer_sent) {
+                error_log("Car rental booking email sent successfully to customer: $customer_email for order: $order_code");
+            } else {
+                error_log("Failed to send car rental booking email to customer: $customer_email for order: $order_code");
+            }
+            
+            if ($admin_sent) {
+                error_log("Car rental booking email sent successfully to admin: $admin_email for order: $order_code");
+            } else {
+                error_log("Failed to send car rental booking email to admin: $admin_email for order: $order_code");
+            }
+            
+        } catch (Exception $e) {
+            error_log("Error sending car rental booking emails for order $order_code: " . $e->getMessage());
         }
     }
     
-    if (!empty($customer_email)) {
+    return $html;
+}
+
+// Function to send car rental confirmation email after payment
+function send_carrent_confirmation_email($carrent_booking_id, $order_id) {
+    $order = wc_get_order($order_id);
+    if (!$order) {
+        error_log("WooCommerce order not found for ID: $order_id");
+        return;
+    }
+    
+    // Get order code
+    $order_code = $order->get_meta('carrent_order_code');
+    if (!$order_code) {
+        error_log("No carrent order code found for order: $order_id");
+        return;
+    }
+    
+    // Try to reconstruct booking data from ACF fields
+    $booking_data = array();
+    
+    // Get profile information
+    $profile_data = get_field('personal_information', $carrent_booking_id);
+    if (!$profile_data) {
+        // Fallback: construct from individual fields
+        $profile_data = array(
+            'fullname' => get_field('customer_name', $carrent_booking_id),
+            'email' => get_field('customer_email', $carrent_booking_id),
+            'phone' => get_field('customer_phone', $carrent_booking_id),
+            'lineid' => get_field('customer_line_id', $carrent_booking_id)
+        );
+    }
+    
+    // Check if we have customer email
+    if (empty($profile_data['email'])) {
+        // Try to get email from WooCommerce order
+        $customer_email = $order->get_billing_email();
+        if (!empty($customer_email)) {
+            $profile_data['email'] = $customer_email;
+        } else {
+            error_log("No customer email found for carrent booking order: $order_code");
+            return;
+        }
+    }
+    
+    $booking_data['profile'] = $profile_data;
+    $booking_data['startDate'] = get_field('pickup_date', $carrent_booking_id);
+    $booking_data['endDate'] = get_field('return_date', $carrent_booking_id);
+    $booking_data['startTime'] = get_field('pickup_time', $carrent_booking_id);
+    $booking_data['endTime'] = get_field('return_time', $carrent_booking_id);
+    $booking_data['pickupLocation'] = get_field('pickup_location', $carrent_booking_id);
+    $booking_data['returnLocation'] = get_field('return_location', $carrent_booking_id);
+    $booking_data['vehicleType'] = get_field('vehicle_type', $carrent_booking_id);
+    $booking_data['totalPrice'] = get_field('total_price', $carrent_booking_id);
+    
+    // Use the beautiful email template function
+    generate_carrent_booking_email_template($booking_data, $order_code, $carrent_booking_id, $profile_data['email']);
+    
+    error_log("Car rental confirmation email sent for order: $order_code to: " . $profile_data['email']);
+}
+
+/**
+ * Alternative hook for when payment is completed (before order status changes)
+ */
+function send_carrent_booking_email_on_payment_complete($order_id) {
+    // Get WooCommerce order
+    $order = wc_get_order($order_id);
+    if (!$order) {
+        error_log("WooCommerce order not found for ID: $order_id");
+        return;
+    }
+    
+    // Check if this is a car rental booking order
+    $carrent_booking_id = $order->get_meta('carrent_booking_id');
+    if (!$carrent_booking_id) {
+        error_log("Not a car rental booking order: $order_id");
+        return;
+    }
+    
+    // Only send if order is paid and not already processed
+    if ($order->is_paid() && !$order->get_meta('_carrent_email_sent')) {
+        // Mark as processed to avoid duplicate emails
+        $order->update_meta_data('_carrent_email_sent', true);
+        $order->save();
+        
+        // Get booking data and order code
         $order_code = $order->get_meta('carrent_order_code');
-        $booking_url = $order->get_meta('carrent_booking_url');
+        $customer_email = $order->get_billing_email();
         
-        $subject = 'ยืนยันการชำระเงิน - การจองรถเช่า ' . $order_code;
+        // Try to reconstruct booking data from ACF fields
+        $booking_data = array();
         
-        $message = "
-        <h2>การชำระเงินเสร็จสิ้น</h2>
-        <p>เรียน คุณ{$customer_name}</p>
-        <p>การชำระเงินสำหรับการจองรถเช่าของคุณเสร็จสิ้นแล้ว</p>
-        
-        <h3>รายละเอียดการจอง:</h3>
-        <ul>
-            <li><strong>รหัสการจอง:</strong> {$order_code}</li>
-            <li><strong>WooCommerce Order ID:</strong> {$order_id}</li>
-            <li><strong>สถานะ:</strong> ยืนยันแล้ว</li>
-        </ul>
-        ";
-        
-        if ($booking_url) {
-            $message .= "<p><a href='{$booking_url}'>ดูรายละเอียดการจอง</a></p>";
+        // Get profile information
+        $profile_data = get_field('personal_information', $carrent_booking_id);
+        if (!$profile_data) {
+            // Fallback: construct from individual fields
+            $profile_data = array(
+                'fullname' => get_field('customer_name', $carrent_booking_id),
+                'email' => get_field('customer_email', $carrent_booking_id),
+                'phone' => get_field('customer_phone', $carrent_booking_id),
+                'lineid' => get_field('customer_line_id', $carrent_booking_id)
+            );
         }
         
+        $booking_data['profile'] = $profile_data;
+        $booking_data['startDate'] = get_field('pickup_date', $carrent_booking_id);
+        $booking_data['endDate'] = get_field('return_date', $carrent_booking_id);
+        $booking_data['startTime'] = get_field('pickup_time', $carrent_booking_id);
+        $booking_data['endTime'] = get_field('return_time', $carrent_booking_id);
+        $booking_data['pickupLocation'] = get_field('pickup_location', $carrent_booking_id);
+        $booking_data['returnLocation'] = get_field('return_location', $carrent_booking_id);
+        $booking_data['vehicleType'] = get_field('vehicle_type', $carrent_booking_id);
+        $booking_data['totalPrice'] = get_field('total_price', $carrent_booking_id);
         
-        $headers = array(
-            'Content-Type: text/html; charset=UTF-8',
-            'From: ' . get_bloginfo('name') . ' <' . get_option('admin_email') . '>'
-        );
+        // Use customer email from order if profile email is empty
+        if (empty($booking_data['profile']['email']) && !empty($customer_email)) {
+            $booking_data['profile']['email'] = $customer_email;
+        }
         
-        wp_mail($customer_email, $subject, $message, $headers);
+        // Send the email using our email template function
+        if (!empty($booking_data['profile']['email'])) {
+            generate_carrent_booking_email_template($booking_data, $order_code, $carrent_booking_id, $booking_data['profile']['email']);
+            error_log("Car rental booking payment complete email sent for order: $order_code to: " . $booking_data['profile']['email']);
+        } else {
+            error_log("No customer email found for car rental booking order: $order_code");
+        }
     }
 }
 
