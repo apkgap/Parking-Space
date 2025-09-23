@@ -152,19 +152,19 @@ jQuery(document).ready(function($) {
                     // Show success message
                     showFieldError($('#carBookingFormBtn'), 'การจองสำเร็จ! กำลังเตรียมข้อมูล...', 'success');
                     
-                    // // Check if WooCommerce checkout URL is available
-                    // if (res.data.redirect_to_checkout && res.data.checkout_url) {
-                    //     // Redirect to WooCommerce checkout
-                    //     setTimeout(function() {
-                    //         window.location.href = res.data.checkout_url;
-                    //     }, 1500);
-                    // } else {
-                    //     // Fallback to thank you page
-                    //     setTimeout(function() {
-                    //         var email = $('#email').val();
-                    //         window.location.href = '/thank-you?ref=' + res.data.order_code + '&email=' + encodeURIComponent(email);
-                    //     }, 2000);
-                    // }
+                    // Check if WooCommerce checkout URL is available
+                    if (res.data.redirect_to_checkout && res.data.checkout_url) {
+                        // Redirect to WooCommerce checkout
+                        setTimeout(function() {
+                            window.location.href = res.data.checkout_url;
+                        }, 1500);
+                    } else {
+                        // Fallback to thank you page
+                        setTimeout(function() {
+                            var email = $('#email').val();
+                            window.location.href = '/thank-you?ref=' + res.data.order_code + '&email=' + encodeURIComponent(email);
+                        }, 2000);
+                    }
                 } else {                
                     showFieldError($('#carBookingFormBtn'), res.data?.message || 'An error occurred while creating your booking');
                 }
