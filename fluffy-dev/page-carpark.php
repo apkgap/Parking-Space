@@ -10,6 +10,7 @@ get_header();
 
 <main id="primary" class="site-main">
     <div class="information-booking py-[2em] sm:py-[2em] lg:py-[2em] xl:py-[5em] px-[1.5em] sm:px-[1.5em] lg:px-[2em] xl:px-[0em]">
+    <form action="" id="carReservationForm" method="post" class="flex flex-col gap-5">
         <div class="ib-box flex flex-col gap-[1em] md:gap-[3em] lg:gap-[5em]">
             <div class="ib-box-header">
                 <div class="container max-w-7xl mx-auto p-0 flex flex-col items-center justify-center">
@@ -39,8 +40,7 @@ get_header();
                         <h2 class="text-xl sm:text-2xl lg:text-2xl font-medium mb-6 py-4 px-0 text-primary rounded-lg inline-flex">
                             ค้นหาที่จอดรถ
                         </h2>
-
-                        <form action="" id="carReservationForm" method="post" class="flex flex-col gap-5">
+                     
                             <!-- Date and Time Section -->
                             <div id="dateTimeStartGrid" class="flex flex-col md:flex-row gap-5">
                                 <div class="input-group flex-1 mb-4 md:mb-0">
@@ -434,10 +434,7 @@ get_header();
                             </div>
 
                             <input type="hidden" id="formDataJson" name="formDataJson">
-                            <div class="box-f_btn flex justify-center align-center">
-                                <button type="submit" id="submit-btn" class="submit-button cursor-pointer">ส่งข้อมูล</button>
-                            </div>                        
-                        </form>
+                                                   
                     </div>
 
                 </div>
@@ -500,14 +497,15 @@ get_header();
                             <span>รวม</span>
                             <span id="summary-total" class="text-primary">-</span>
                         </div>
-                        <span id="submit-btn" class="hide w-full bg-primary text-white font-[600] py-2 rounded-xl transition-colors text-base hover:opacity-70 submit-button cursor-pointer hidden">
-                            จองทันที
-                        </span>
+                        <div class="box-f_btn flex justify-center align-center">
+                            <button type="submit" id="submit-btn" class="submit-button cursor-pointer">จองทันที</button>
+                        </div> 
                     </div>
                 </div>
             </div>
             
         </div>
+        </form>
     </div>
 
 
