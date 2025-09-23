@@ -228,6 +228,9 @@ function ajax_insert_car_rent_acf() {
     // Generate unique booking reference
     $booking_ref = 'CR' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
     
+    // Clean booking reference to remove any special characters that could cause URL encoding issues
+    $booking_ref = preg_replace('/[^A-Za-z0-9\-]/', '', $booking_ref);
+    
     // Create post
     $post_data = array(
         'post_type'   => 'car_rentals',
