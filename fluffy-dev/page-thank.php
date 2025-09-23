@@ -20,13 +20,22 @@ $is_parking = !empty($order_code);
 <div id="ty-page" class="min-h-screen flex items-center py-10">
     <div class="max-w-full w-full mx-auto">
         <!-- Header -->
-        <div class="container max-w-2xl mx-auto">
-            <div id="booking-header" name="booking-header" class="text-center mb-6 px-4 py-2">
-                <div class="flex justify-between items-center mb-4" id="booking-header-steps" name="booking-header-steps" class="booking-header-steps">
-                    <span id="step-booking" name="step-booking" class="text-gray-400 thai-font text-base step-booking">การจอง</span>
-                    <span id="step-payment" name="step-payment" class="text-gray-400 thai-font text-base step-payment">ชำระเงิน</span>
-                    <span id="step-confirm" name="step-confirm" class="text-primary thai-font font-semibold text-base step-confirm">ยืนยันการจอง</span>
-                </div>
+        <div class="container max-w-7xl mx-auto p-0 flex flex-col items-center justify-center">
+            <div class="head-step_box w-full">
+                <ul class="steps steps-horizontal w-full">
+                    <li class="step">
+                        <span class="step-icon"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>
+                        การจอง
+                    </li>
+                    <li class="step">
+                        <span class="step-icon"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>
+                        ชำระเงิน
+                    </li>
+                    <li class="step step-primary">
+                        <span class="step-icon"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></span>
+                        ยืนยันการจอง
+                    </li>
+                </ul>
             </div>
         </div>
         

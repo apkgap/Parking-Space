@@ -1069,8 +1069,10 @@ async function handleSubmit(event) {
                 window.location.href = response.data.checkout_url;
             } else {
                 // Fallback to thank you page if no checkout URL
-                const email = document.querySelector('#email')?.value || '';
-                window.location.href = '/thank-you?order_code=' + response.data.order_code + '&email=' + encodeURIComponent(email);
+                setTimeout(function() {
+                    var email = $('#email').val();
+                    window.location.href = '/thank-you/?order_code=' + response.data.order_code + '&email=' + encodeURIComponent(email);
+                }, 2000);
             }
         } else {
             // Show error message

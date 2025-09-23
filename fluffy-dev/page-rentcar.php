@@ -539,7 +539,7 @@ get_header();
                     <div class="space-y-2 mb-4">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-0">
                             <span>ราคารวมทั้งหมด</span>
-                            <span id="summary-total-price">1,000 บาท</span>
+                            <span id="summary-total-price">-</span>
                         </div>
                         <div id="coupon-discount-row" class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-0 text-green-600 hidden">
                             <span>ส่วนลด</span>
@@ -549,7 +549,7 @@ get_header();
                     <div class="border-t border-gray-200 my-4"></div>
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xl font-bold mb-6 gap-1 sm:gap-0">
                         <span>รวม</span>
-                        <span id="summary-grand-total">800 บาท</span>
+                        <span id="summary-grand-total">-</span>
                     </div>
                     <button id="carBookingFormBtn" type="submit" class="btn btn-primary w-full">จองทันที</button>
                 </div>

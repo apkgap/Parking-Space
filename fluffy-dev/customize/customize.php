@@ -86,6 +86,7 @@ function enqueue_customize_file() {
 }
 add_action('wp_enqueue_scripts', 'enqueue_customize_file');
 
+
 function remove_fluffy_styles() {
     wp_dequeue_style( 'fluffy-style' ); // Replace 'fluffy-style' with the actual handle if different
     wp_deregister_style( 'fluffy-style' );
@@ -1513,9 +1514,9 @@ function update_parking_booking_on_order_complete($order_id) {
         
         // 2. If not found, try from parking booking ACF fields
         if (empty($customer_email)) {
-            $profile_data = get_field('profile_information', $parking_booking_id);
-            if ($profile_data && isset($profile_data['email'])) {
-                $customer_email = $profile_data['email'];
+            $profile_data = get_field('email_park', $parking_booking_id);
+            if ($profile_data) {
+                $customer_email = $profile_data;
             }
         }
         
@@ -1674,10 +1675,14 @@ function parking_redirect_after_payment($order_id) {
             $order_code = $order->get_meta('parking_order_code');
             
             // Get customer email
-            $booking_data = get_field('booking_information', $parking_booking_id);
-            $customer_email = '';
-            if ($booking_data && isset($booking_data['email'])) {
-                $customer_email = $booking_data['email'];
+            $customer_email = get_field('email_park', $parking_booking_id);
+            
+            // If still empty, try customer_info field
+            if (empty($customer_email)) {
+                $customer_info = get_field('customer_info', $parking_booking_id);
+                if ($customer_info && isset($customer_info['email'])) {
+                    $customer_email = $customer_info['email'];
+                }
             }
             
             $thank_you_url = home_url('/thank-you/');
@@ -1686,8 +1691,14 @@ function parking_redirect_after_payment($order_id) {
                 'email' => $customer_email
             ], $thank_you_url);
             
+            // Fix URL encoding issue - replace &#038; with &
+            $thank_you_url = str_replace('&#038;', '&', $thank_you_url);
+            
+            // Additional fix for URL encoding in JavaScript
+            $thank_you_url = html_entity_decode($thank_you_url, ENT_QUOTES, 'UTF-8');
+            
             echo '<script type="text/javascript">
-            window.location.href = "' . esc_url($thank_you_url) . '";
+            window.location.href = "' . $thank_you_url . '";
             </script>';
         }
     }
