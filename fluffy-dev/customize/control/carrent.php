@@ -169,8 +169,13 @@ function ajax_insert_car_rent_acf() {
         return;
     }
 
+    // Debug: Log incoming fields
+    error_log("Incoming fields data: " . print_r($fields, true));
+    
     // Validate outbound trip required fields
     $outbound_trip = isset($fields['travel_information_outbound_trip']) ? $fields['travel_information_outbound_trip'] : array();
+    error_log("Outbound trip data: " . print_r($outbound_trip, true));
+    
     if (empty($outbound_trip['depart_start_location']) ||
         empty($outbound_trip['depart_start_location_note']) ||
         empty($outbound_trip['depart_destination']) ||
@@ -205,17 +210,17 @@ function ajax_insert_car_rent_acf() {
     }
 
     // Validate flight information
-    if (!isset($fields['flight_information']['arrival_flight_no']) ||
-        !isset($fields['flight_information']['arrival_flight_time']) ||
-        !isset($fields['flight_information']['departure_flight_no']) ||
-        !isset($fields['flight_information']['departure_flight_time']) ||
-        empty($fields['flight_information']['arrival_flight_no']) ||
-        empty($fields['flight_information']['arrival_flight_time']) ||
-        empty($fields['flight_information']['departure_flight_no']) ||
-        empty($fields['flight_information']['departure_flight_time'])) {
-        wp_send_json_error(['message' => 'Please fill in all required flight information']);
-        return;
-    }
+    // if (!isset($fields['flight_information']['arrival_flight_no']) ||
+    //     !isset($fields['flight_information']['arrival_flight_time']) ||
+    //     !isset($fields['flight_information']['departure_flight_no']) ||
+    //     !isset($fields['flight_information']['departure_flight_time']) ||
+    //     empty($fields['flight_information']['arrival_flight_no']) ||
+    //     empty($fields['flight_information']['arrival_flight_time']) ||
+    //     empty($fields['flight_information']['departure_flight_no']) ||
+    //     empty($fields['flight_information']['departure_flight_time'])) {
+    //     wp_send_json_error(['message' => 'Please fill in all required flight information']);
+    //     return;
+    // }
 
     // Sanitize and prepare data
     $sanitized_fields = sanitize_car_rental_fields($fields);
@@ -249,13 +254,43 @@ function ajax_insert_car_rent_acf() {
         return;
     }
 
+    // Debug: Log sanitized fields
+    error_log("Sanitized fields for post {$post_id}: " . print_r($sanitized_fields, true));
+    
     // Save ACF fields
     if (function_exists('update_field')) {
         foreach ($sanitized_fields as $field_name => $value) {
             $result = update_field($field_name, $value, $post_id);
             if (!$result) {
                 error_log("Failed to save ACF field: {$field_name} for post: {$post_id}");
+            } else {
+                error_log("Successfully saved ACF field: {$field_name} for post: {$post_id}");
             }
+        }
+        
+        // Save individual location fields for easier access
+        if (isset($sanitized_fields['travel_information_outbound_trip'])) {
+            $outbound = $sanitized_fields['travel_information_outbound_trip'];
+            
+            // Save individual outbound fields
+            update_field('depart_start_location', $outbound['depart_start_location'] ?? '', $post_id);
+            update_field('depart_destination', $outbound['depart_destination'] ?? '', $post_id);
+            update_field('depart_date', $outbound['depart_date'] ?? '', $post_id);
+            update_field('depart_time', $outbound['depart_time'] ?? '', $post_id);
+            
+            error_log("Saved outbound location fields for post {$post_id}: Start='{$outbound['depart_start_location']}', Dest='{$outbound['depart_destination']}'");
+        }
+        
+        if (isset($sanitized_fields['travel_information_return_trip'])) {
+            $return = $sanitized_fields['travel_information_return_trip'];
+            
+            // Save individual return fields
+            update_field('return_start_location', $return['return_start_location'] ?? '', $post_id);
+            update_field('return_destination', $return['return_destination'] ?? '', $post_id);
+            update_field('return_date', $return['return_date'] ?? '', $post_id);
+            update_field('return_time', $return['return_time'] ?? '', $post_id);
+            
+            error_log("Saved return location fields for post {$post_id}: Start='{$return['return_start_location']}', Dest='{$return['return_destination']}'");
         }
         
         // Save booking reference as separate field (if you have this field in ACF)
@@ -775,12 +810,14 @@ function send_carrent_booking_email_on_payment_complete($order_id) {
         }
         
         $booking_data['profile'] = $profile_data;
-        $booking_data['startDate'] = get_field('pickup_date', $carrent_booking_id);
+        // TODO: ตรวจสอบว่า ACF fields เหล่านี้มีอยู่จริงหรือไม่
+        // ปัญหา: ฟิลด์ location ถูกบันทึกแต่ชื่อไม่ตรงกับที่ดึง
+        $booking_data['startDate'] = get_field('pickup_date', $carrent_booking_id) ?: get_field('depart_date', $carrent_booking_id);
         $booking_data['endDate'] = get_field('return_date', $carrent_booking_id);
-        $booking_data['startTime'] = get_field('pickup_time', $carrent_booking_id);
+        $booking_data['startTime'] = get_field('pickup_time', $carrent_booking_id) ?: get_field('depart_time', $carrent_booking_id);
         $booking_data['endTime'] = get_field('return_time', $carrent_booking_id);
-        $booking_data['pickupLocation'] = get_field('pickup_location', $carrent_booking_id);
-        $booking_data['returnLocation'] = get_field('return_location', $carrent_booking_id);
+        $booking_data['pickupLocation'] = get_field('pickup_location', $carrent_booking_id) ?: get_field('depart_start_location', $carrent_booking_id);
+        $booking_data['returnLocation'] = get_field('return_location', $carrent_booking_id) ?: get_field('depart_destination', $carrent_booking_id);
         $booking_data['vehicleType'] = get_field('vehicle_type', $carrent_booking_id);
         $booking_data['totalPrice'] = get_field('total_price', $carrent_booking_id);
         
@@ -847,6 +884,78 @@ function carrent_redirect_after_payment($order_id) {
     }
 }
 
+// Helper function to decode URL encoded strings
+function decode_if_encoded($value) {
+    if (is_string($value) && strpos($value, '%') !== false) {
+        $decoded = urldecode($value);
+        // Double decode if needed
+        if (strpos($decoded, '%') !== false) {
+            $decoded = urldecode($decoded);
+        }
+        return $decoded;
+    }
+    return $value;
+}
+
+// Helper function to convert Thai date to Y-m-d format (ACF compatible)
+function convert_thai_date($dateStr) {
+    if (empty($dateStr)) return '';
+    
+    // Thai month mapping
+    $thaiMonths = [
+        'ม.ค.' => '01', 'ก.พ.' => '02', 'มี.ค.' => '03', 'เม.ย.' => '04',
+        'พ.ค.' => '05', 'มิ.ย.' => '06', 'ก.ค.' => '07', 'ส.ค.' => '08',
+        'ก.ย.' => '09', 'ต.ค.' => '10', 'พ.ย.' => '11', 'ธ.ค.' => '12'
+    ];
+    
+    // Check if it's Thai date format (e.g., "25 ก.ย. 2568")
+    if (preg_match('/^(\d{1,2})\s+([ก-ฮ\.]+)\s+(\d{4})$/', trim($dateStr), $matches)) {
+        $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+        $thaiMonth = $matches[2];
+        $year = intval($matches[3]);
+        
+        // Convert Buddhist year to Gregorian year if needed
+        if ($year > 2500) {
+            $year = $year - 543;
+        }
+        
+        if (isset($thaiMonths[$thaiMonth])) {
+            $month = $thaiMonths[$thaiMonth];
+            return $year . '-' . $month . '-' . $day; // Y-m-d format
+        }
+    }
+    
+    // Check if it's already in YYYY-MM-DD format, return as is
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', trim($dateStr))) {
+        return $dateStr; // Already Y-m-d format
+    }
+    
+    // Check if it's in DD/MM/YYYY format and convert to Y-m-d
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', trim($dateStr), $matches)) {
+        $day = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+        $month = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+        $year = $matches[3];
+        return $year . '-' . $month . '-' . $day; // Y-m-d format
+    }
+    
+    // Check if it's in MM/DD/YYYY format and convert to Y-m-d
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', trim($dateStr), $matches)) {
+        $month = str_pad($matches[1], 2, '0', STR_PAD_LEFT);
+        $day = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+        $year = $matches[3];
+        return $year . '-' . $month . '-' . $day; // Y-m-d format
+    }
+    
+    // If other format, try to parse and convert to Y-m-d
+    $timestamp = strtotime($dateStr);
+    if ($timestamp !== false) {
+        return date('Y-m-d', $timestamp); // Y-m-d format
+    }
+    
+    // If all else fails, return original string
+    return $dateStr;
+}
+
 function sanitize_car_rental_fields($fields) {
     $sanitized = array();
     
@@ -873,14 +982,18 @@ function sanitize_car_rental_fields($fields) {
     
     // Travel Information - Outbound
     if (isset($fields['travel_information_outbound_trip'])) {
+        $outbound = $fields['travel_information_outbound_trip'];
         $sanitized['travel_information_outbound_trip'] = array(
-            'depart_start_location' => isset($fields['travel_information_outbound_trip']['depart_start_location']) ? sanitize_text_field($fields['travel_information_outbound_trip']['depart_start_location']) : '',
-            'depart_start_location_note' => isset($fields['travel_information_outbound_trip']['depart_start_location_note']) ? sanitize_textarea_field($fields['travel_information_outbound_trip']['depart_start_location_note']) : '',
-            'depart_destination' => isset($fields['travel_information_outbound_trip']['depart_destination']) ? sanitize_text_field($fields['travel_information_outbound_trip']['depart_destination']) : '',
-            'depart_destination_note' => isset($fields['travel_information_outbound_trip']['depart_destination_note']) ? sanitize_textarea_field($fields['travel_information_outbound_trip']['depart_destination_note']) : '',
-            'depart_date' => isset($fields['travel_information_outbound_trip']['depart_date']) ? sanitize_text_field($fields['travel_information_outbound_trip']['depart_date']) : '',
-            'depart_time' => isset($fields['travel_information_outbound_trip']['depart_time']) ? sanitize_text_field($fields['travel_information_outbound_trip']['depart_time']) : ''
+            'depart_start_location' => isset($outbound['depart_start_location']) ? sanitize_text_field(decode_if_encoded($outbound['depart_start_location'])) : '',
+            'depart_start_location_note' => isset($outbound['depart_start_location_note']) ? sanitize_textarea_field(decode_if_encoded($outbound['depart_start_location_note'])) : '',
+            'depart_destination' => isset($outbound['depart_destination']) ? sanitize_text_field(decode_if_encoded($outbound['depart_destination'])) : '',
+            'depart_destination_note' => isset($outbound['depart_destination_note']) ? sanitize_textarea_field(decode_if_encoded($outbound['depart_destination_note'])) : '',
+            'depart_date' => isset($outbound['depart_date']) ? convert_thai_date($outbound['depart_date']) : '',
+            'depart_time' => isset($outbound['depart_time']) ? sanitize_text_field($outbound['depart_time']) : ''
         );
+        
+        // Log the decoded values
+        error_log("Decoded outbound data: " . print_r($sanitized['travel_information_outbound_trip'], true));
     }
     
     // Trip Type
@@ -890,14 +1003,18 @@ function sanitize_car_rental_fields($fields) {
     
     // Travel Information - Return
     if (isset($fields['travel_information_return_trip'])) {
+        $return = $fields['travel_information_return_trip'];
         $sanitized['travel_information_return_trip'] = array(
-            'return_start_location' => isset($fields['travel_information_return_trip']['return_start_location']) ? sanitize_text_field($fields['travel_information_return_trip']['return_start_location']) : '',
-            'return_start_location_note' => isset($fields['travel_information_return_trip']['return_start_location_note']) ? sanitize_textarea_field($fields['travel_information_return_trip']['return_start_location_note']) : '',
-            'return_destination' => isset($fields['travel_information_return_trip']['return_destination']) ? sanitize_text_field($fields['travel_information_return_trip']['return_destination']) : '',
-            'return_destination_note' => isset($fields['travel_information_return_trip']['return_destination_note']) ? sanitize_textarea_field($fields['travel_information_return_trip']['return_destination_note']) : '',
-            'return_date' => isset($fields['travel_information_return_trip']['return_date']) ? sanitize_text_field($fields['travel_information_return_trip']['return_date']) : '',
-            'return_time' => isset($fields['travel_information_return_trip']['return_time']) ? sanitize_text_field($fields['travel_information_return_trip']['return_time']) : ''
+            'return_start_location' => isset($return['return_start_location']) ? sanitize_text_field(decode_if_encoded($return['return_start_location'])) : '',
+            'return_start_location_note' => isset($return['return_start_location_note']) ? sanitize_textarea_field(decode_if_encoded($return['return_start_location_note'])) : '',
+            'return_destination' => isset($return['return_destination']) ? sanitize_text_field(decode_if_encoded($return['return_destination'])) : '',
+            'return_destination_note' => isset($return['return_destination_note']) ? sanitize_textarea_field(decode_if_encoded($return['return_destination_note'])) : '',
+            'return_date' => isset($return['return_date']) ? convert_thai_date($return['return_date']) : '',
+            'return_time' => isset($return['return_time']) ? sanitize_text_field($return['return_time']) : ''
         );
+        
+        // Log the decoded values
+        error_log("Decoded return data: " . print_r($sanitized['travel_information_return_trip'], true));
     }
     
     // Booking Details

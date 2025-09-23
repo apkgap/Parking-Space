@@ -114,7 +114,10 @@ jQuery(document).ready(function($) {
             }
         };
 
-        // console.log('Form fields data:', fields);
+        console.log('Form fields data:', fields);
+        console.log('Selected package data:', selectedPackageData);
+        console.log('Travel outbound data:', fields.travel_information_outbound_trip);
+        console.log('Travel return data:', fields.travel_information_return_trip);
 
         // รวบรวมข้อมูล hidden inputs และเพิ่มลงใน data ที่ส่ง
         var ajaxData = {
@@ -144,17 +147,24 @@ jQuery(document).ready(function($) {
                 clearTimeout(loadingTimeout);
                 
                 if (res.success) {
-                    // Check if WooCommerce checkout URL is available
-                    if (res.data.redirect_to_checkout && res.data.checkout_url) {
-                        // Redirect to WooCommerce checkout
-                        window.location.href = res.data.checkout_url;
-                    } else {
-                        // Fallback to thank you page
-                        setTimeout(function() {
-                            var email = $('#email').val();
-                            window.location.href = '/thank-you?ref=' + res.data.order_code + '&email=' + encodeURIComponent(email);
-                        }, 2000);
-                    }
+                    console.log('Booking created successfully:', res.data);
+                    
+                    // Show success message
+                    showFieldError($('#carBookingFormBtn'), 'การจองสำเร็จ! กำลังเตรียมข้อมูล...', 'success');
+                    
+                    // // Check if WooCommerce checkout URL is available
+                    // if (res.data.redirect_to_checkout && res.data.checkout_url) {
+                    //     // Redirect to WooCommerce checkout
+                    //     setTimeout(function() {
+                    //         window.location.href = res.data.checkout_url;
+                    //     }, 1500);
+                    // } else {
+                    //     // Fallback to thank you page
+                    //     setTimeout(function() {
+                    //         var email = $('#email').val();
+                    //         window.location.href = '/thank-you?ref=' + res.data.order_code + '&email=' + encodeURIComponent(email);
+                    //     }, 2000);
+                    // }
                 } else {                
                     showFieldError($('#carBookingFormBtn'), res.data?.message || 'An error occurred while creating your booking');
                 }
@@ -204,10 +214,10 @@ jQuery(document).ready(function($) {
             '#departTime': 'Departure time is required',
             '#carTypeSelect': 'Car type is required',
             '#adultCount': 'Number of adults is required',
-            '#arrivalFlightNo': 'Arrival flight number is required',
-            '#arrivalFlightTime': 'Arrival flight time is required',
-            '#departureFlightNo': 'Departure flight number is required',
-            '#departureFlightTime': 'Departure flight time is required'
+            // '#arrivalFlightNo': 'Arrival flight number is required',
+            // '#arrivalFlightTime': 'Arrival flight time is required',
+            // '#departureFlightNo': 'Departure flight number is required',
+            // '#departureFlightTime': 'Departure flight time is required'
         };
 
         // Check if it's a round trip and validate return trip fields
@@ -286,24 +296,39 @@ jQuery(document).ready(function($) {
         clearFieldError($(this));
     });
 
-    function showFieldError($field, message) {
+    function showFieldError($field, message, type = 'error') {
         // ตรวจสอบว่า $field เป็น jQuery object และมี popup_span เป็น sibling
         if (!$field || !$field.length || typeof $field.siblings !== 'function' || !$field.siblings('.popup_span').length) {
             // fallback: แสดง error ด้านบนปุ่ม submit
-            $('.error-message').remove();
-            const $alert = $('<div class="alert alert-error error-message">' + message + '</div>');
+            $('.error-message, .success-message').remove();
+            const alertClass = type === 'success' ? 'alert-success success-message' : 'alert-error error-message';
+            const $alert = $('<div class="alert ' + alertClass + '">' + message + '</div>');
             $('.btn.btn-primary.w-full').parent().prepend($alert);
+            
+            // Auto hide success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    $alert.fadeOut();
+                }, 3000);
+            }
             return;
         }
         // โค้ดเดิม
         $field.siblings('.popup_span').empty();
         $field.siblings('.popup_span').removeClass('hide');
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
         $field.siblings('.popup_span').addClass('flex').append(`
-            <div role="alert" class="alert alert-error mt-2 w-full text-center">
-                
+            <div role="alert" class="alert ${alertClass} mt-2 w-full text-center">
                 <span>${message}</span>
             </div>
         `);
+        
+        // Auto hide success messages
+        if (type === 'success') {
+            setTimeout(() => {
+                $field.siblings('.popup_span').empty().addClass('hide').removeClass('flex');
+            }, 3000);
+        }
     }
 
     // Real-time validation
@@ -594,4 +619,55 @@ jQuery(document).ready(function($) {
         };
     }
 
+    // Validation for route-search-form
+    $('#route-search-form').on('submit', function(e) {
+        e.preventDefault();
+        let isValid = true;
+        const requiredFields = {
+            '#origin': 'Departure location is required',
+            '#destination': 'Departure destination is required'
+        };
+
+        $.each(requiredFields, function(selector, message) {
+            const $field = $(selector);
+            $field.siblings('.alert-error').remove();
+            if (!$field.val()) {
+                $field.addClass('error');
+                showFieldError($field, message);
+                isValid = false;
+            } else {
+                $field.removeClass('error');
+            }
+        });
+
+        if (isValid) {
+            // If valid, proceed with the form submission logic
+            // This could be an AJAX call or other processing
+            console.log('Form is valid, proceeding with search...');
+            // Add your form submission logic here
+        }
+    });
+
+    // Clear validation errors when user selects values in dropdown for route-search-form
+    $('#origin, #destination').on('change', function() {
+        const $field = $(this);
+        if ($field.val()) {
+            $field.removeClass('error');
+            $field.siblings('.alert-error').remove();
+            clearFieldError($field);
+        }
+    });
+
+    // Clear validation errors when user selects values in main booking form dropdowns
+    $('#departStart, #departHuaHin, #returnStart, #returnHuaHin').on('change', function() {
+        const $field = $(this);
+        if ($field.val()) {
+            $field.removeClass('error');
+            $field.siblings('.alert-error').remove();
+            $field.siblings('.popup_span').empty().addClass('hide').removeClass('flex');
+            clearFieldError($field);
+        }
+    });
+
+    // Clear errors only when user manually selects from dropdown - no automatic checking
 });

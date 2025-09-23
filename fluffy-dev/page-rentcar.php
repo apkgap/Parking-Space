@@ -311,7 +311,7 @@ get_header();
                         <h2 class="text-2xl font-bold mb-4 text-black">ข้อมูลเที่ยวบิน</h2>
                         <div class="flex flex-col md:flex-row gap-4 mb-4">
                             <div class="flex flex-col flex-1 input-group">
-                                <label for="arrivalFlightNo" class="block text-gray-700 font-medium mb-1"><span class="text-red-500 pr-2">*</span>กรอกเที่ยวบินขาเข้า (Arrival Flight No.)</label>
+                                <label for="arrivalFlightNo" class="block text-gray-700 font-medium mb-1">กรอกเที่ยวบินขาเข้า (Arrival Flight No.)</label>
                                 <input
                                     type="text"
                                     id="arrivalFlightNo" 
@@ -323,7 +323,7 @@ get_header();
                                 <input type="hidden" id="arrivalFlightNo_data" name="arrivalFlightNo_data">
                             </div>
                             <div class="flex flex-col flex-1 relative">
-                                <label for="arrivalFlightTime" class="block text-gray-700 font-medium mb-1"><span class="text-red-500 pr-2">*</span>เวลาเที่ยวบินขาเข้า</label>
+                                <label for="arrivalFlightTime" class="block text-gray-700 font-medium mb-1">เวลาเที่ยวบินขาเข้า</label>
                                 <input
                                     type="text"
                                     id="arrivalFlightTime"
@@ -336,7 +336,7 @@ get_header();
                         </div>
                         <div class="flex flex-col md:flex-row gap-4 mb-4">
                             <div class="flex flex-col flex-1 relative input-group">
-                                <label for="departureFlightNo" class="block text-gray-700 font-medium mb-1"><span class="text-red-500 pr-2">*</span>กรอกเที่ยวบินขาออก (Departure Flight No.)</label>
+                                <label for="departureFlightNo" class="block text-gray-700 font-medium mb-1">กรอกเที่ยวบินขาออก (Departure Flight No.)</label>
                                 <input
                                     type="text"
                                     id="departureFlightNo"
@@ -348,7 +348,7 @@ get_header();
                                 <input type="hidden" id="departureFlightNo_data" name="departureFlightNo_data">
                             </div>
                             <div class="flex flex-col flex-1 relative">
-                                <label for="departureFlightTime" class="block text-gray-700 font-medium mb-1"><span class="text-red-500 pr-2">*</span>เวลาเที่ยวบินขาออก</label>
+                                <label for="departureFlightTime" class="block text-gray-700 font-medium mb-1">เวลาเที่ยวบินขาออก</label>
                                 <input
                                     type="text"
                                     id="departureFlightTime"

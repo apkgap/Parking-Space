@@ -299,6 +299,25 @@ function ajax_search_route_pricing() {
                 bookingForm.appendChild(input);
             });
             
+            // Clear validation errors for fields that will be populated
+            const fieldsToCheck = ["departStart", "departHuaHin", "returnStart", "returnHuaHin", "carTypeSelect"];
+            fieldsToCheck.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.classList.remove("error");
+                    // Remove alert-error siblings
+                    const alertErrors = field.parentNode.querySelectorAll(".alert-error");
+                    alertErrors.forEach(alert => alert.remove());
+                    // Clear popup_span
+                    const popupSpan = field.parentNode.querySelector(".popup_span");
+                    if (popupSpan) {
+                        popupSpan.innerHTML = "";
+                        popupSpan.classList.add("hide");
+                        popupSpan.classList.remove("flex");
+                    }
+                }
+            });
+
             // ตั้งค่า dropdown และปิดการแก้ไข
             const departStartSelect = document.getElementById("departStart");
             const departHuaHinSelect = document.getElementById("departHuaHin");
@@ -387,6 +406,7 @@ function ajax_search_route_pricing() {
             for (let option of selectElement.options) {
                 if (option.text.trim() === trimmedText) {
                     selectElement.value = option.value;
+                    option.selected = true; // ตั้งให้ option นี้เป็น selected
                     return; // ถ้าเจอ ตั้งค่าแล้วจบ
                 }
             }
@@ -395,12 +415,13 @@ function ajax_search_route_pricing() {
             const newOption = document.createElement("option");
             newOption.text = trimmedText;
             newOption.value = trimmedText; // หรือจะใช้ ID พิเศษก็ได้ เช่น "auto-" + Date.now()
+            newOption.selected = true; // ตั้งให้ option ใหม่เป็น selected
             selectElement.add(newOption);
 
             // ตั้งค่าให้ dropdown ชี้ไปที่ option ใหม่นี้
             selectElement.value = trimmedText;
 
-            console.log(`Option created: ${trimmedText}`);
+            console.log(`Option created and selected: ${trimmedText}`);
         }
         
         function clearSelectedPackage() {

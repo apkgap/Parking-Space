@@ -307,7 +307,7 @@ get_header();
                                         <div class="input_sending_pickup_time"></div>
                                         </div>
                                         <div class="input-group flex-1">
-                                        <label for="sending_dropoff_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลาออกลานจอดรถ</label>
+                                        <label for="sending_dropoff_time" class="text-sm sm:text-base lg:text-[16px]"><span class="text-red-500 pr-2">*</span>เวลารับที่สนามบิน</label>
                                         <input type="text" id="sending_dropoff_time" name="sending_dropoff_time" class="input-field bg-white req-ocx" placeholder="โปรดระบุ">
                                         <div class="popup_span w-full hide"></div>
                                         <div class="input_sending_dropoff_time"></div>
