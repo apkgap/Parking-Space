@@ -7,6 +7,27 @@
 get_header();
 ?>
 <main id="primary" class="primary-rentcar site-main py-[1.5em] sm:py-[1.5em] lg:py-[2em] xl:py-[5em] px-[1.5em] sm:px-[1.5em] lg:px-[2em] xl:px-[0em] bg-gray-50 min-h-screen">
+    <div class="ib-box-header">
+        <div class="container max-w-7xl mx-auto p-0 flex flex-col items-center justify-center pb-[2em] sm:pb-[2em] lg:pb-[2em] xl:pb-[4em]">
+            <div class="head-step_box w-full">
+                <ul class="steps steps-horizontal w-full">
+                    <li class="step step-primary">
+                        <span class="step-icon"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>
+                        การจอง
+                    </li>
+                    <li class="step">
+                        <span class="step-icon"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg></span>
+                        ชำระเงิน
+                    </li>
+                    <li class="step">
+                        <span class="step-icon"><svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></span>
+                        ยืนยันการจอง
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+    </div>
     <div class="container max-w-7xl mx-auto">
             <?php
         echo do_shortcode( '[car_route_search]');
@@ -16,7 +37,6 @@ get_header();
             
 
         <div class="flex flex-col lg:flex-row gap-8">
-
             <!-- Form Section -->
             <div class="w-full lg:w-[70%] space-y-8">
                     <!-- Personal Information Card -->

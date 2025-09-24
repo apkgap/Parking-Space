@@ -536,9 +536,10 @@ input, select, textarea {
  .btn-shimmer:hover::before {
      left: 100%;
 }
-div#summary-box #submit-btn {
-    display: none;
+#ty-page h2 {
+    color: rgb(14 193 149);
 }
+
 /* Enhanced loader animation - now using Tailwind classes */
 
 @-webkit-keyframes float {

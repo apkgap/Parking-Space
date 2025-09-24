@@ -40,7 +40,7 @@ get_header();
                         <h2 class="text-xl sm:text-2xl lg:text-2xl font-medium mb-6 py-4 px-0 text-primary rounded-lg inline-flex">
                             ค้นหาที่จอดรถ
                         </h2>
-                     
+                        <div class="flex flex-col gap-5">
                             <!-- Date and Time Section -->
                             <div id="dateTimeStartGrid" class="flex flex-col md:flex-row gap-5">
                                 <div class="input-group flex-1 mb-4 md:mb-0">
@@ -434,7 +434,7 @@ get_header();
                             </div>
 
                             <input type="hidden" id="formDataJson" name="formDataJson">
-                                                   
+                        </div>                       
                     </div>
 
                 </div>
