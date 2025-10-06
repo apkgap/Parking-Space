@@ -5,12 +5,9 @@ Template Name: Forgot Password Page
 
 get_header(); ?>
 
-<div id="box-forgot-password" class="box-forgot-password" style="
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-image: url('<?php echo get_template_directory_uri(); ?>/customize/img/bg-x.webp');">
-    
+    <!-- background-image: url('<?php echo get_template_directory_uri(); ?>/customize/img/bg-x.webp'); -->
+<div id="box-forgot-password" class="box-forgot-password" style="background-color: #f0f4f8;">
+
     <!-- Notification Modal -->
     <div id="notification-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div id="notification-content" class="bg-white rounded-3xl shadow-2xl p-10 w-full mx-auto max-w-md border border-white/20 relative z-10 animate-slide-in text-center">

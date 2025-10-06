@@ -61,14 +61,12 @@ async function fetchParkingData() {
             apiUrl += `?locate_id=${locationId}`;
         }
 
-        console.log('API URL:', apiUrl);
         
         const response = await fetch(apiUrl);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log('API parking data:', data);
         return data;
     } catch (error) {
         console.error('Error fetching parking data:', error);
@@ -89,7 +87,6 @@ async function fetchParkingBookingData() {
             grid_x: item.position?.x,
             grid_y: item.position?.y
         }));
-        console.log('API parking_booking data:', transformed);
         return transformed;
     } catch (error) {
         console.error('Error fetching parking_booking data:', error);
@@ -251,14 +248,12 @@ function transformToGridFormat(apiData) {
      * @returns {void}
      */
     async function initializeParkingData() {
-        console.log('Fetching parking data from API...');
         const apiData = await fetchParkingData();
         if (!apiData) {
             console.error('API failed, no parking data loaded');
             parkingData = []; // ไม่ใช้ fallback ใดๆ
         } else {
             parkingData = transformToGridFormat(apiData);
-            console.log('Parking data loaded from API:', parkingData.length, 'spaces');
         }
     }
 
@@ -376,7 +371,6 @@ function transformToGridFormat(apiData) {
      * @returns {void}
      */
     function renderStats() {
-        console.log('current parkingData:', parkingData);
         const total = parkingData.length;
         const occupied = parkingData.filter(s => s.status === 'occupied').length;
         const available = total - occupied;
@@ -588,7 +582,6 @@ async function checkParkingAvailability(startDateTime, endDateTime, locationChoo
             locationChoose
         });
         if (response.success === true   ) {
-            // console.log('Success from server:', response.data);
             return response.data || [];
         }
 
@@ -641,24 +634,19 @@ $('#btn-search_all').on('click', async function() {
         let startDateTime = `${startDate} ${startTime}`;
         let endDateTime = `${endDate} ${endTime}`;
 
-        console.log('ส่งไป PHP:', startDateTime, endDateTime, locationChoose);
 
         // เรียกใช้ function ที่ปรับปรุงแล้ว
         const occupiedSpaces = await checkParkingAvailability(startDateTime, endDateTime, locationChoose);
 
-        console.log('Occupied parking spaces from PHP:', occupiedSpaces);
-        console.log('All parking spaces:', parkingData); 
 
          // อัพเดทสถานะที่จอด
          const occupiedIds = occupiedSpaces.map(s => String(s.id));
          const occupiedIdsString = String(occupiedIds);
-         console.log('Occupied IDs:', occupiedIdsString);
          
          parkingData.forEach(space => {
              const spaceId = space.original_data?.id;
              const spaceTitle = space.id; // This is the space title like "A8"
              if (spaceId && occupiedIdsString.includes(spaceId)) {
-                 console.log(`Marking ${spaceTitle} as occupied`);
                  space.status = 'occupied';
              } else {
                  space.status = 'available';
@@ -740,7 +728,6 @@ $('#btn-search_all').on('click', async function() {
      * @returns {void}
      */
     function addVehicleRow() {
-    console.log('addVehicleRow called, current count:', vehicleRowCount);
     vehicleRowCount++;
     const newRowHtml = `
         <div class="vehicle-row border-b border-gray-300 pb-6 mb-6">
@@ -839,7 +826,6 @@ $('#btn-search_all').on('click', async function() {
             // Make sure the container is empty before generating new inputs
             if (vehicleInputsContainer) {
                 vehicleInputsContainer.innerHTML = '';
-                console.log(`Cleared vehicle inputs container for row ${vehicleRowCount} before generating new ones`);
                 // Use the new function to generate inputs
                 generateVehicleInputs(vehicleInputsContainer, quantity, vehicleRowCount, vehicleType);
             }
@@ -1037,7 +1023,6 @@ async function handleSubmit(event) {
         console.warn("Hidden input field 'formDataJson' not found. Data will not be stored there.");
     }
 
-    console.log('Submission Data:', reservationDetails);
 
     // ส่งข้อมูลไป backend ด้วย AJAX
     try {
@@ -1053,7 +1038,6 @@ async function handleSubmit(event) {
         
         $('.box-loading').css('display', 'none');
         if (response.success) {
-             console.log('ข้อมูลที่ส่งไป:', response);
             // --- เปลี่ยนสถานะช่องที่เลือกเป็น occupied ---
             selectedSpaces.forEach(sel => {
                 const idx = parkingData.findIndex(space => space.id === sel.id);
@@ -1223,7 +1207,6 @@ function initializeTimePickers() {
             // Make sure the container is empty before generating new inputs
             if (vehicleInputsContainer) {
                 vehicleInputsContainer.innerHTML = '';
-                console.log('Cleared vehicle inputs container before generating new ones');
                 generateVehicleInputs(vehicleInputsContainer, quantity, '1', vehicleType);
             }
             
@@ -1609,11 +1592,9 @@ function generateVehicleInputs(container, quantity, rowCount, customVehicleType)
     // Clear container before generating new inputs
     container.innerHTML = '';
     
-    console.log(`Generating vehicle inputs: rowCount=${rowCount}, quantity=${quantity}`);
     
     // Safety check - if container already has inputs, clear them first
     if (container.querySelectorAll('.vehicle-input-group').length > 0) {
-        console.log('Container already has inputs, clearing them first');
         container.innerHTML = '';
     }
     
@@ -1677,7 +1658,6 @@ function generateVehicleInputs(container, quantity, rowCount, customVehicleType)
     }
     
     // Check if the button exists in the DOM
-    console.log('Vehicle inputs generated successfully');
 }
 
     // Coupon functionality
@@ -1705,7 +1685,6 @@ function generateVehicleInputs(container, quantity, rowCount, customVehicleType)
                     if (summaryTotal && summaryTotal.textContent !== '-') {
                         const priceText = summaryTotal.textContent.replace(/[^\d]/g, '');
                         originalPrice = parseFloat(priceText) || 0;
-                        console.log('Set originalPrice from current total:', originalPrice);
                     }
                 }
 
@@ -1717,7 +1696,6 @@ function generateVehicleInputs(container, quantity, rowCount, customVehicleType)
                 
                 if (response.success) {
                     appliedCoupon = response.data;
-                    console.log('Applied coupon data:', appliedCoupon);
                     showCouponMessage(`ใช้คูปองสำเร็จ! ส่วนลด ${appliedCoupon.discount_amount} บาท`, 'success');
                     updatePriceWithDiscount();
                 } else {
@@ -1749,44 +1727,28 @@ function generateVehicleInputs(container, quantity, rowCount, customVehicleType)
     
     function updatePriceWithDiscount() {
         if (!appliedCoupon || !originalPrice) {
-            console.log('Cannot update price with discount:', { appliedCoupon, originalPrice });
             return;
         }
         
         const discountAmount = parseFloat(appliedCoupon.discount_amount) || 0;
         const finalPrice = Math.max(0, originalPrice - discountAmount);
         
-        console.log('Updating price with discount:', {
-            originalPrice,
-            discountAmount,
-            finalPrice,
-            summaryDiscountElement: dom.summaryDiscount,
-            couponDiscountRowElement: dom.couponDiscountRow
-        });
+    
         
         // Update summary display
         if (dom.summaryDiscount) {
             dom.summaryDiscount.textContent = `-${discountAmount.toLocaleString()} บาท`;
-            console.log('Updated discount display');
-        } else {
-            console.log('summaryDiscount element not found');
         }
         
         if (dom.couponDiscountRow) {
             dom.couponDiscountRow.classList.remove('hidden');
-            console.log('Showed discount row');
-        } else {
-            console.log('couponDiscountRow element not found');
-        }
+        } 
         
         // Update total price
         const summaryTotal = document.getElementById('summary-total');
         if (summaryTotal) {
             summaryTotal.textContent = `${finalPrice.toLocaleString()} บาท`;
-            console.log('Updated total price to:', finalPrice);
-        } else {
-            console.log('summaryTotal element not found');
-        }
+        } 
     }
     
     // Override the existing calculateParkingPriceRealtime function to store original price

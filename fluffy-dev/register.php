@@ -7,7 +7,7 @@ Template Name: Register Page
 get_header();
 ?>
 
-    <div id="box-register" class="box-register">
+    <div id="box-register" class="box-register" style="background-color: #f0f4f8;">
         <!-- Notification Modal -->
         <div id="notification-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 hidden">
             <div id="notification-content" class="bg-white rounded-3xl shadow-2xl p-10 w-full mx-auto max-w-md border border-white/20 relative z-10 animate-slide-in text-center">
@@ -162,7 +162,7 @@ get_header();
                         </div>
 
                         <!-- Terms Checkbox -->
-                        <div class="flex items-start gap-3 mb-3">
+                        <label class="flex items-start gap-3 mb-3" for="terms">
                             <div class="relative mt-0.5">
                                 <input type="checkbox" id="terms" name="terms" required autocomplete="off" class="opacity-0 absolute">
                                 <span class="w-5 h-5 bg-white border-2 border-gray-200 rounded cursor-pointer transition-all duration-300 flex items-center justify-center hover:border-primary">
@@ -171,10 +171,10 @@ get_header();
                                     </svg>
                                 </span>
                             </div>
-                            <label for="terms" class="text-gray-600 text-sm leading-relaxed cursor-pointer">
+                            <span class="text-gray-600 text-sm leading-relaxed cursor-pointer">
                                 I agree to the <a href="#" target="_blank" class="text-primary hover:underline">Terms of Service</a> and <a href="#" target="_blank" class="text-primary hover:underline">Privacy Policy</a>
-                            </label>
-                        </div>
+                            </span>
+                        </label>
 
                         <!-- Submit Button -->
                         <button type="submit" id="register-btn" class="w-full py-4 bg-primary text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 relative overflow-hidden btn-shimmer hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-primary/30 active:translate-y-0">

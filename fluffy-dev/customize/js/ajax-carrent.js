@@ -378,6 +378,7 @@ jQuery(document).ready(function($) {
         // ถ้าเป็น round trip ให้คูณ 2
         if (isRoundTrip) {
             pricePerTrip = basePrice * 2;
+            $('input[name="selected_package_price"]').val(pricePerTrip.toLocaleString('en-US') + ' บาท');
         } else {
             pricePerTrip = basePrice;
         }

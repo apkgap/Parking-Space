@@ -415,8 +415,8 @@ function prepare_car_rental_response($rental) {
     $departure_flight_no = isset($travel_information_return_trip['return_start_location']) ? $travel_information_return_trip['return_start_location'] : '';
     
     // Format dates from Ymd to d/m/Y format
-    $arrival_date = $arrival_date_raw ? DateTime::createFromFormat('Ymd', $arrival_date_raw)->format('d/m/Y') : '';
-    $departure_date = $departure_date_raw ? DateTime::createFromFormat('Ymd', $departure_date_raw)->format('d/m/Y') : '';
+    $arrival_date = $arrival_date_raw ? DateTime::createFromFormat('Y-m-d', $arrival_date_raw)->format('d/m/Y') : '';
+    $departure_date = $departure_date_raw ? DateTime::createFromFormat('Y-m-d', $departure_date_raw)->format('d/m/Y') : '';
     
     // Extract additional information
     $discount_code = isset($additional_information['discount_code']) ? $additional_information['discount_code'] : '';

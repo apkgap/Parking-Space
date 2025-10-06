@@ -31,12 +31,12 @@ function enqueue_daisyui_and_tailwind() {
     );
     
     // Enqueue DaisyUI lofi theme only
-    wp_enqueue_style(
-        'daisyui-lofi-theme',
-        'https://cdn.jsdelivr.net/npm/daisyui@5/dist/themes/lofi.css',
-        array('daisyui'),
-        '5.0.0'
-    );
+    // wp_enqueue_style(
+    //     'daisyui-lofi-theme',
+    //     'https://cdn.jsdelivr.net/npm/daisyui@5/dist/themes/lofi.css',
+    //     array('daisyui'),
+    //     '5.0.0'
+    // );
 
     // // Enqueue Tailwind CSS Browser script
     wp_enqueue_script(
@@ -1872,10 +1872,8 @@ function generate_parking_booking_email_template($booking_data, $order_code, $po
             <td bgcolor="#29b2e2" style="padding:18px 24px; color:#ffffff;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td class="text-center-sm" style="font-weight:bold; font-size:20px;">' . $site_name . '</td>
-                  <td align="right" class="text-center-sm">
-                    <a href="' . $site_url . '" style="color:#ffffff; text-decoration:none; font-size:14px;">OK Parking ▸</a>
-                  </td>
+                  <td class="text-center-sm" style="font-weight:bold; font-size:20px;color:#ffffff">' . $site_name . '</td>
+                  <td align="right" class="text-center-sm">Parking and Shuttle</td>
                 </tr>
               </table>
             </td>
@@ -1883,113 +1881,117 @@ function generate_parking_booking_email_template($booking_data, $order_code, $po
 
           <!-- Title -->
            <tr>
-            <td align="center" class="px-24 py-32" style="padding:28px 24px;">
+            <td align="left" class="px-24 py-32" style="padding:28px 24px;">
               <img src="' . get_stylesheet_directory_uri() . '/customize/img/logo-okpark.jpg" width="60" height="60" alt="Success" style="display:block; margin:0 auto 12px; border-radius:32px;">
-              <div style="font-size:22px; font-weight:bold; color:#333;">ขอบคุณสำหรับคำสั่งซื้อของคุณ!</div>
-              <div style="font-size:13px; color:#666;">เราได้รับคำสั่งซื้อแล้วและกำลังจัดส่งให้คุณ</div>
+              <div style="font-size:14px;line-height:20px; font-weight:bold; color:#333;">Dear '.$full_name.',</div>
+              <div style="font-size:13px; color:#666;">
+              OK Parking is pleased to confirm that your payment for booking number '.$order_code.'<BR>has been successfully verified, and your reservation is now complete.
+              </div>
             </td>
           </tr>
+
+
+        <tr>
+             <td>
+                <div style="margin-bottom:25px; text-align:center;">
+                    <div style="font-weight:bold; color:#111; margin-bottom:10px;">QR Code for entry and exit</div>
+                        <div style="display:inline-block; padding:15px; background:#ffffff; border:1px solid #e5e7eb; border-radius:8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <img style="width:200px; height:200px;" alt="QR Code" src="' . esc_url_raw(get_field('qr_code_url', $post_id)) . '">
+                        </div>
+                    <div style="font-size:12px; color:#666; margin-top:8px;">Please show this QR Code at the entry and exit points</div>
+                </div>
+             </td>
+         </tr>
+        
+
 
           <!-- Order summary -->
           <tr>
             <td class="px-24" style="padding:0 24px 8px;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e5e7eb; border-radius:6px;">
                 <tr>
-                  <td colspan="2" style="padding:16px; font-weight:bold; color:#111827;">สรุปรายการจอง</td>
+                  <td colspan="2" style="padding:16px; font-weight:bold; color:#111827;">Your Information</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 16px; color:#666;">หมายเลขออเดอร์</td>
-                  <td align="right" style="padding:12px 16px; color:#111;">' . $order_code . '</td>
-                </tr>
-                <tr>
-                  <td style="padding:12px 16px; color:#666;">ชื่อผู้จอง</td>
+                  <td style="padding:12px 16px; color:#666;">Full Name</td>
                   <td align="right" style="padding:12px 16px; color:#111;">' . $full_name . '</td>
                 </tr>
-                <tr>
-                  <td style="padding:12px 16px; color:#666;">อีเมล</td>
-                  <td align="right" style="padding:12px 16px; color:#111;">' . $email . '</td>
-                </tr>
-                <tr>
-                  <td style="padding:12px 16px; color:#666;">เบอร์โทรศัพท์</td>
+                    <tr>
+                  <td style="padding:12px 16px; color:#666;">Phone Number</td>
                   <td align="right" style="padding:12px 16px; color:#111;">' . $phone . '</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 16px; color:#666;">LINE ID</td>
-                  <td align="right" style="padding:12px 16px; color:#111;">' . $line_id . '</td>
+                  <td style="padding:12px 16px; color:#666;">Email</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $email . '</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 16px; color:#666;">สถานที่</td>
+                  <td style="padding:12px 16px; color:#666;">Line ID / WhatsApp</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $line_id . '</td>
+                </tr>
+                ';
+    $html .= '</table>
+            </td>
+          </tr>
+
+
+
+          <!-- Reservation Details -->
+          <tr>
+            <td class="px-24" style="padding:0 24px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e5e7eb; border-radius:6px;">
+                <tr>
+                  <td colspan="2" style="padding:16px; font-weight:bold; color:#111827;">Reservation Details</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">Booking ID</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $order_code . '</td>
+                </tr>
+                    <tr>
+                  <td style="padding:12px 16px; color:#666;">Parking Location</td>
                   <td align="right" style="padding:12px 16px; color:#111;">' . $location_name . '</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 16px; color:#666;">วันที่เริ่มต้น</td>
+                  <td style="padding:12px 16px; color:#666;">Start Date</td>
                   <td align="right" style="padding:12px 16px; color:#111;">' . $start_date . ' ' . $start_time . '</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 16px; color:#666;">วันที่สิ้นสุด</td>
+                  <td style="padding:12px 16px; color:#666;">End Date</td>
                   <td align="right" style="padding:12px 16px; color:#111;">' . $end_date . ' ' . $end_time . '</td>
                 </tr>';
-    
-    // Add addon services if selected
-    if ($service_pickup || $service_valet) {
-        $html .= '<tr>
-                  <td style="padding:12px 16px; color:#666;">บริการเสริม</td>
-                  <td align="right" style="padding:12px 16px; color:#111;">';
-        
-        if ($service_pickup) {
-            $html .= 'บริการรับ-ส่งสนามบิน<br>';
-        }
-        
-        if ($service_valet) {
-            $html .= 'บริการรับ-ส่งรถ (Valet)';
-        }
-        
-        $html .= '</td>
-                </tr>';
-    }
-    
-    $html .= '              </table>
-            </td>
-          </tr>';
-    
+
+
+                    
     // Vehicle information section
     if (!empty($booking_data['selectedParkingSpaces']) && is_array($booking_data['selectedParkingSpaces'])) {
-        $html .= '
-          <!-- Vehicle Information -->
-          <tr>
-            <td class="px-24" style="padding:8px 24px 24px;">
-              <table role="presentation" width="100%">
-                <tr>
-                  <td class="stack" width="100%" valign="top" style="padding:16px; border:1px solid #e5e7eb; border-radius:6px;">
-                    <div style="font-weight:bold; color:#111; margin-bottom:6px;">ข้อมูลรถ</div>';
-        
-        foreach ($booking_data['selectedParkingSpaces'] as $index => $space) {
-            $license_plate = isset($space['licensePlate']) ? esc_html($space['licensePlate']) : '';
-            $other_type_car = isset($space['otherTypeCar']) ? esc_html($space['otherTypeCar']) : '';
-            $parking_slot_id = isset($space['id']) ? esc_html($space['id']) : '';
-            
-            $html .= '<div style="font-size:13px; color:#555; line-height:1.5; margin-top:10px; padding-top:10px; border-top:1px solid #eee;">
-                      รถ #' . ($index + 1) . '<br>
-                      ทะเบียนรถ: ' . $license_plate . '<br>
-                      ประเภทรถ: ' . $other_type_car . '<br>
-                      ช่องจอด: ' . $parking_slot_id . '
-                    </div>';
-        }
+                        $html .= '
+                        <!-- Vehicle Information -->
+                        <tr>
+                            <td style="padding:12px 16px; color:#666;">
+                                    ';
+                                foreach ($booking_data['selectedParkingSpaces'] as $index => $space) {
+                                    $license_plate = isset($space['licensePlate']) ? esc_html($space['licensePlate']) : '';
+                                    $other_type_car = isset($space['otherTypeCar']) ? esc_html($space['otherTypeCar']) : '';
+                                    $parking_slot_id = isset($space['id']) ? esc_html($space['id']) : '';
+                                    
+                                    $html .= '<div style="font-size:13px; color:#555; line-height:1.5; margin-top:10px; padding-top:10px; border-top:1px solid #eee;">
+                                            Vehicle #' . ($index + 1) . '<br>
+                                            Vehicle Type: ' . $license_plate . '<br>
+                                            Other Type Car: ' . $other_type_car . '<br>
+                                            Parking Slot: ' . $parking_slot_id . '
+                                            </div>';
+                                }
+                                $html .= '                  
+                            </td>
+                        </tr>';
+                    }
 
-        $html .= '<div style="margin-top:20px; text-align:center;">
-                        <div style="font-weight:bold; color:#111; margin-bottom:10px;">QR Code สำหรับการเข้า-ออก</div>
-                        <div style="display:inline-block; padding:15px; background:#ffffff; border:1px solid #e5e7eb; border-radius:8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            <img style="width:200px; height:200px;" alt="QR Code" src="' . esc_url_raw(get_field('qr_code_url', $post_id)) . '">
-                        </div>
-                        <div style="font-size:12px; color:#666; margin-top:8px;">กรุณาแสดง QR Code นี้ ณ จุดเข้า-ออก</div>
-                    </div>';
-        
-        $html .= '                  </td>
-                </tr>
-              </table>
+
+
+    $html .= '</table>
             </td>
           </tr>';
-    }
+
+    
     
     // Sending flight information section
     if (!empty($sending_depart) || !empty($sending_arrival)) {
@@ -2000,47 +2002,56 @@ function generate_parking_booking_email_template($booking_data, $order_code, $po
               <table role="presentation" width="100%">
                 <tr>
                   <td class="stack" width="100%" valign="top" style="padding:16px; border:1px solid #e5e7eb; border-radius:6px;">
-                    <div style="font-weight:bold; color:#111; margin-bottom:6px;">ข้อมูลเที่ยวบินขาไป</div>
+                    <div style="font-weight:bold; color:#111; margin-bottom:6px;">Add-on Services</div>
                     <div style="font-size:13px; color:#555; line-height:1.5;">';
         
         if (!empty($sending_depart)) {
-            $html .= 'เที่ยวบินขาออก: ' . $sending_depart . ' เวลา ' . $sending_depart_time . '<br>';
+            $html .= 'Departure Flight: ' . $sending_depart . '<br>';
         }
         
         if (!empty($sending_arrival)) {
-            $html .= 'เที่ยวบินขาเข้า: ' . $sending_arrival . ' เวลา ' . $sending_arrival_time . '<br>';
+            $html .= 'Arrival Flight: ' . $sending_arrival . '<br>';
+        }
+
+
+        if (!empty($sending_depart_time)) {
+            $html .= $sending_depart_time . '<br>';
+        }
+        
+        if (!empty($sending_arrival_time)) {
+            $html .=  $sending_arrival_time . '<br>';
         }
         
         if (!empty($sending_pickup_time)) {
-            $html .= 'เวลารับรถ: ' . $sending_pickup_time . '<br>';
+            $html .= 'Parking Time: ' . $sending_pickup_time . '<br>';
         }
         
         if (!empty($sending_dropoff_time)) {
-            $html .= 'เวลาส่งรถ: ' . $sending_dropoff_time . '<br>';
+            $html .= 'Drop-off Time: ' . $sending_dropoff_time . '<br>';
         }
         
         if (!empty($sending_pickup_point)) {
-            $html .= 'จุดรับรถ: ' . $sending_pickup_point . '<br>';
+            $html .= 'Pickup Location: ' . $sending_pickup_point . '<br>';
         }
         
         if (!empty($sending_dropoff_point)) {
-            $html .= 'จุดส่งรถ: ' . $sending_dropoff_point . '<br>';
+            $html .= 'Drop-off Location: ' . $sending_dropoff_point . '<br>';
         }
         
         if (!empty($sending_adult_count)) {
-            $html .= 'จำนวนผู้ใหญ่: ' . $sending_adult_count . ' คน<br>';
+            $html .= 'Passengers (Adults): ' . $sending_adult_count . ' คน<br>';
         }
         
         if (!empty($sending_child_count)) {
-            $html .= 'จำนวนเด็ก: ' . $sending_child_count . ' คน<br>';
+            $html .= 'Passengers (Children): ' . $sending_child_count . ' คน<br>';
         }
         
         if (!empty($sending_baggage_count)) {
-            $html .= 'จำนวนกระเป๋า: ' . $sending_baggage_count . ' ใบ<br>';
+            $html .= 'Number of Luggage: ' . $sending_baggage_count . ' ใบ<br>';
         }
         
         if (!empty($sending_pickup_note)) {
-            $html .= 'หมายเหตุการรับรถ:<br>' . nl2br($sending_pickup_note) . '<br>';
+            $html .= 'Notes for Driver:<br>' . nl2br($sending_pickup_note) . '<br>';
         }
         
         $html .= '                    </div>
@@ -2051,65 +2062,17 @@ function generate_parking_booking_email_template($booking_data, $order_code, $po
           </tr>';
     }
     
-    // Parking car information section
-    if (!empty($parking_depart) || !empty($parking_arrival)) {
-        $html .= '
-          <!-- Parking Car Information -->
-          <tr>
-            <td class="px-24" style="padding:8px 24px 24px;">
-              <table role="presentation" width="100%">
-                <tr>
-                  <td class="stack" width="100%" valign="top" style="padding:16px; border:1px solid #e5e7eb; border-radius:6px;">
-                    <div style="font-weight:bold; color:#111; margin-bottom:6px;">ข้อมูลเที่ยวบินขากลับ</div>
-                    <div style="font-size:13px; color:#555; line-height:1.5;">';
-        
-        if (!empty($parking_depart)) {
-            $html .= 'เที่ยวบินขาออก: ' . $parking_depart . ' เวลา ' . $parking_depart_time . '<br>';
-        }
-        
-        if (!empty($parking_arrival)) {
-            $html .= 'เที่ยวบินขาเข้า: ' . $parking_arrival . ' เวลา ' . $parking_arrival_time . '<br>';
-        }
-        
-        if (!empty($parking_pickup_time)) {
-            $html .= 'เวลารับรถ: ' . $parking_pickup_time . '<br>';
-        }
-        
-        if (!empty($parking_dropoff_time)) {
-            $html .= 'เวลาส่งรถ: ' . $parking_dropoff_time . '<br>';
-        }
-        
-        if (!empty($parking_pickup_point)) {
-            $html .= 'จุดรับรถ: ' . $parking_pickup_point . '<br>';
-        }
-        
-        if (!empty($parking_dropoff_point)) {
-            $html .= 'จุดส่งรถ: ' . $parking_dropoff_point . '<br>';
-        }
-        
-        if (!empty($parking_pickup_note)) {
-            $html .= 'หมายเหตุการรับรถ:<br>' . nl2br($parking_pickup_note) . '<br>';
-        }
-        
-        $html .= '                    </div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>';
-    }
     
     $html .= '
           <!-- Promo block -->
           <tr>
             <td bgcolor="#29b2e2" align="center" style="padding:28px 24px; color:#ffffff;">
-              <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">ขอบคุณที่ใช้บริการของเรา!</div>
-              <div style="font-size:14px; margin-bottom:15px;">หากมีข้อสงสัยกรุณาติดต่อ: ' . $admin_email . '</div>
-              <a href="' . $site_url . '" 
-                 style="display:inline-block; background:#1c8db8; color:#ffffff; text-decoration:none; 
-                        padding:12px 22px; border-radius:4px; font-weight:bold; font-size:14px;">
-                กลับไปที่เว็บไซต์
-              </a>
+              <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">Need Help? We’re Here for You!</div>
+              <div style="font-size:14px; font-weight:bold; margin-bottom:10px;">If you have any questions or need assistance, please feel free to reach us</div>
+              <div style="font-size:14px; margin-bottom:15px;">LINE Official Account: @okparking24</div>
+              <div style="font-size:14px; margin-bottom:15px;">Phone: +6696-286-4050</div>
+              <div style="font-size:14px; margin-bottom:15px;">Email: okparking.net@gmail.com</div>
+              <div style="font-size:17px; font-weight:bold; margin-bottom:10px;">Thank you for choosing OK Parking.<BR>We look forward to welcoming you!</div>
             </td>
           </tr>
 
@@ -2117,11 +2080,7 @@ function generate_parking_booking_email_template($booking_data, $order_code, $po
           <tr>
             <td align="center" style="padding:24px; background:#f7f7f7;">
               <div style="font-size:12px; color:#666;">
-                <div><strong>' . $site_name . '</strong> • ' . $admin_email . '</div>
-                <div style="margin-top:8px;">
-                  <a href="' . $site_url . '/preferences" style="color:#29b2e2; text-decoration:none;">ตั้งค่าการรับอีเมล</a> • 
-                  <a href="' . $site_url . '/unsubscribe" style="color:#29b2e2; text-decoration:none;">ยกเลิกรับข่าวสาร</a>
-                </div>
+                <div>Copyright © <strong>' . $site_name . '</strong> All rights reserved.</div>
               </div>
             </td>
           </tr>
@@ -2143,14 +2102,16 @@ function generate_parking_booking_email_template($booking_data, $order_code, $po
         );
         
         // Email subject
-        $subject = 'ยืนยันการจองที่จอดรถ - ' . $order_code . ' - ' . $site_name;
+        // $subject = 'ยืนยันการจองที่จอดรถ - ' . $order_code . ' - ' . $site_name;
+        $subject = '[OK Parking] [Parking Service] Your Payment is Complete – Booking ID #' . $order_code;
         
         try {
             // Send email to customer
             $customer_sent = wp_mail($customer_email, $subject, $html, $headers);
             
+
             // Send email to admin with different subject
-            $admin_subject = 'มีการจองที่จอดรถใหม่ - ' . $order_code;
+            $admin_subject = '[Parking Service] New Booking Received (Booking No. ' . $order_code . ') – Please Verify Information';
             $admin_sent = wp_mail($admin_email, $admin_subject, $html, $headers);
             
             // Log email sending results

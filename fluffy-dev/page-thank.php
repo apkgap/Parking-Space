@@ -103,27 +103,12 @@ $is_parking = !empty($order_code);
                     align-items: center;
                 ">
                 <p class="text-sm thai-font mb-2 font-semibold text-green-700">**กรุณาแอด <span class="text-green-600 font-bold">LINE Official Account</span> ของเรา**</p>
-                <p class="text-xs text-gray-600 thai-font mb-4">เพื่อไม่พลาดทุกข้อบิดตอนการใช้งาน</p>
+                <p class="text-sm text-gray-600 thai-font mb-4">เพื่อไม่พลาดทุกขั้นตอนการใช้งาน</p>
                 
-                <div class="text-left mb-4 space-y-2">
-                    <div class="flex items-start gap-2">
-                        <div class="w-2 h-2 bg-green-500 rounded-full mt-1"></div>
-                        <span class="text-sm thai-font text-green-900">แจ้งเตือนการคอนเฟิร์มก่อนดรต</span>
-                    </div>
-                    <div class="flex items-start gap-2">
-                        <div class="w-2 h-2 bg-green-500 rounded-full mt-1"></div>
-                        <span class="text-sm thai-font text-green-900">ล็อคใช้เครานท์</span>
-                    </div>
-                    <div class="flex items-start gap-2">
-                        <div class="w-2 h-2 bg-green-500 rounded-full mt-1"></div>
-                        <span class="text-sm thai-font text-green-900">การแจ้งเตือนค่าบริบท (ถ้ามี)</span>
-                    </div>
-                </div>
-                
-                <button id="line-icon" class="flex items-center gap-2 text-white px-4 py-2 rounded-lg shadow transition thai-font font-semibold text-base mx-auto" style="background:#22c55e;" onclick="openLine()">
-                    <svg id="Capa_1" enable-background="new 0 0 512 512" height="34" viewBox="0 0 512 512" width="34" xmlns="http://www.w3.org/2000/svg"><g><path d="m435.699 77.37c-48.153-37.963-111.971-58.87-179.699-58.87s-131.546 20.907-179.699 58.87c-49.203 38.791-76.301 90.688-76.301 146.13s27.098 107.339 76.301 146.13c48.153 37.963 111.971 58.87 179.699 58.87 15.219 0 30.373-1.069 45.25-3.187v53.187c0 4.611 2.12 8.965 5.75 11.809 2.667 2.089 5.931 3.192 9.251 3.191 1.198 0 2.404-.144 3.592-.437 34.694-8.559 82.733-43.684 119.539-87.403 21.631-25.695 38.836-53.226 51.137-81.828 14.253-33.145 21.481-66.902 21.481-100.332 0-55.442-27.098-107.339-76.301-146.13zm-297.166 217.046c-11.465.064-19.287.092-24.674.092-11.166 0-11.881-.123-12.961-.308-7.201-1.234-12.466-7.478-12.466-14.785v-99.915c0-8.284 6.716-15 15-15s15 6.716 15 15v84.994c5.999-.012 13.147-.04 19.933-.078h.086c8.245 0 14.952 6.66 14.998 14.916.046 8.284-6.632 15.038-14.916 15.084zm64.636-14.916c0 8.284-6.716 15-15 15s-15-6.716-15-15v-100c0-8.284 6.716-15 15-15s15 6.716 15 15zm112.898 13.156c-6.875 2.149-14.1-.483-18.411-6.707l-40.152-58.144v51.695c0 8.284-6.716 15-15 15s-15-6.716-15-15v-99.813c0-6.564 4.269-12.367 10.536-14.32 6.265-1.951 13.076.395 16.807 5.797l42.308 61.265-.51-52.784c-.08-8.284 6.57-15.064 14.854-15.145h.148c8.217 0 14.917 6.62 14.996 14.855l.935 96.63c.001.048.001.097.001.145-.001 7.853-4.52 14.34-11.512 16.526zm89.394-78.156c8.284 0 15 6.716 15 15s-6.716 15-15 15h-24.029v20h27.136c8.284 0 15 6.716 15 15s-6.716 15-15 15h-42.136c-8.284 0-15-6.716-15-15v-100c0-8.284 6.716-15 15-15h42.136c8.284 0 15 6.716 15 15s-6.716 15-15 15h-27.136v20z"/></g></svg>
-                    <span>@okparking</span>
-                </button>
+                <a href="https://lin.ee/Bm45y3b" id="line-icon" class="flex items-center gap-2 text-white px-4 py-2 rounded-lg shadow transition thai-font font-semibold text-base mx-auto" style="background:#22c55e;" onclick="openLine()">
+                    <svg xmlns="http://www.w3.org/2000/svg" id="Bold" enable-background="new 0 0 24 24" height="512" viewBox="0 0 24 24" width="512"><path d="m12 .5c-6.615 0-12 4.398-12 9.803 0 4.841 4.27 8.897 10.035 9.668.391.083.923.26 1.058.594.12.303.079.771.038 1.087l-.164 1.026c-.045.303-.24 1.193 1.049.649 1.291-.542 6.916-4.104 9.436-7.019 1.724-1.9 2.548-3.847 2.548-6.005 0-5.405-5.385-9.803-12-9.803zm-4.697 13.017h-2.386c-.345 0-.63-.287-.63-.633v-4.801c0-.347.285-.634.63-.634.348 0 .63.287.63.634v4.167h1.756c.348 0 .629.285.629.634 0 .346-.282.633-.629.633zm2.466-.633c0 .346-.282.633-.631.633-.345 0-.627-.287-.627-.633v-4.801c0-.347.282-.634.63-.634.346 0 .628.287.628.634zm5.741 0c0 .272-.174.513-.432.6-.064.021-.133.031-.199.031-.211 0-.391-.091-.51-.252l-2.443-3.338v2.958c0 .346-.279.633-.631.633-.346 0-.626-.287-.626-.633v-4.8c0-.272.173-.513.43-.599.06-.023.136-.033.194-.033.195 0 .375.105.495.256l2.462 3.351v-2.975c0-.347.282-.634.63-.634.345 0 .63.287.63.634zm3.855-3.035c.349 0 .63.287.63.635 0 .347-.281.634-.63.634h-1.755v1.132h1.755c.349 0 .63.285.63.634 0 .346-.281.633-.63.633h-2.386c-.345 0-.627-.287-.627-.633v-4.801c0-.347.282-.634.63-.634h2.386c.346 0 .627.287.627.634 0 .351-.281.634-.63.634h-1.755v1.132z"/></svg>
+                    <span>@okparking24</span>
+                </a>
                 </div>
             </div>
             
@@ -132,12 +117,13 @@ $is_parking = !empty($order_code);
                 <div class="container-m max-w-[500px] mx-auto flex flex-col justify-center items-center bg-neutral-400 p-6 border border-gray-300 rounded-xl">
                 <p class="text-xs text-gray-600 thai-font mb-2 text-white">หากมีข้อสงสัย กรุณาติดต่อเจ้าหน้าที่</p>
                 <div class="text-xs thai-font space-y-1 text-white">
-                    <p><span class="font-semibold">โทรศัพท์ :</span> 081-123-4567</p>
-                    <p><span class="font-semibold">อีเมล :</span> Support@okparking.com</p>
-                    <p><span class="font-semibold">Line ID :</span> @okparking</p>
+                    <p><span class="font-semibold">โทรศัพท์ :</span> 096-286-4050</p>
+                    <p><span class="font-semibold">อีเมล :</span> okparking.net@gmail.com</p>
+                    <p><span class="font-semibold">Line ID :</span> <a href="https://lin.ee/Bm45y3b">@okparking24</a></p>
                 </div>
                 </div>
             </div>
+
             
             <!-- Action Buttons -->
             <div class="flex justify-center gap-3 pt-2">

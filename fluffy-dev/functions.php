@@ -16,11 +16,12 @@ function enqueue_wpt_assets() {
 
     $css_version = filemtime($css_file);
     $js_version = filemtime($js_file);
+	$theme_dir = get_template_directory();
 
 	    // Enqueue Flatpickr from local files
 		wp_enqueue_style('flatpickr-css', get_template_directory_uri() . '/booking/flatpickr.min.css', array(), filemtime($theme_dir . '/booking/flatpickr.min.css'));
 		wp_enqueue_script('flatpickr-js', get_template_directory_uri() . '/booking/flatpickr.min.js', array(), filemtime($theme_dir . '/booking/flatpickr.min.js'), true);
-		wp_enqueue_script('flatpickr-th', get_template_directory_uri() . '/booking/th.js', array('flatpickr-js'), filemtime($theme_dir . '/booking/l10n/th.js'), true);
+		wp_enqueue_script('flatpickr-th', get_template_directory_uri() . '/booking/th.js', array('flatpickr-js'), filemtime($theme_dir . '/booking/th.js'), true);
 		
 
     wp_enqueue_style('wpt-styles', get_template_directory_uri() . '/booking/wpt-styles.css', array(), $css_version);
@@ -46,16 +47,15 @@ function wpt_enqueue_swiper_scripts() {
 
     // Enqueue custom CSS for the carousel with file modification time as version
     wp_enqueue_style('wpt-carousel-style', get_template_directory_uri() . '/css/wpt-carousel.css', array(), $css_ver);
-
-	if(is_front_page()){
-		wp_enqueue_script('wpt-carousel-script', get_template_directory_uri() . '/js/wpt-carousel.js', array('swiper-js'), $js_ver, true);
-	}
 }
 add_action('wp_enqueue_scripts', 'wpt_enqueue_swiper_scripts');
 
 
 
 function wpt_promotion_carousel_shortcode($atts) {
+    // Enqueue the carousel script
+    wp_enqueue_script('wpt-carousel-script', get_template_directory_uri() . '/js/wpt-carousel.js', array('swiper-js'), filemtime(get_template_directory() . '/js/wpt-carousel.js'), true);
+
     // Shortcode attributes
     $atts = shortcode_atts(array(
         'posts_per_page' => 9, // Number of posts to display
@@ -117,6 +117,65 @@ function wpt_promotion_carousel_shortcode($atts) {
 			 <?php endif; ?>
             
         </div>
+
+		<script type="module">
+			document.addEventListener('DOMContentLoaded', function() {
+				var swiperElements = document.querySelectorAll('.wpt-post-carousel.swiper');
+				
+				swiperElements.forEach(function(element) {
+					var swiper = new Swiper(element, {
+						slidesPerView: 1,
+						spaceBetween: 10,
+						navigation: {
+							nextEl: element.querySelector('.wpt-post-carousel .swiper-button-next'),
+							prevEl: element.querySelector('.wpt-post-carousel .swiper-button-prev'),
+						},
+						breakpoints: {
+							640: {
+								slidesPerView: 1,
+								spaceBetween: 20,
+							},
+							768: {
+								slidesPerView: 2,
+								spaceBetween: 30,
+							},
+							1024: {
+								slidesPerView: 3,
+								spaceBetween: 30,
+							},
+						},
+						autoplay: {
+							delay: 10000,
+							disableOnInteraction: false,
+						},
+						loop: true,
+					});
+				});
+			});
+		</script>
+
+		<style>
+			.wpt-post-carousel .swiper-wrapper {
+				align-items: stretch;
+			}
+			.wpt-swiper-slide {
+				display: flex;
+				flex-direction: column;
+				height: 100%;
+				min-height: 471px;
+			}
+			.wpt-slide-content {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				justify-content: space-between;
+			}
+			.wpt-slide-image {
+				min-height: 241px;
+				object-fit: cover;
+				width: 100%;
+			}
+		</style>
     <?php endif;
 
     // Reset post data
@@ -383,12 +442,12 @@ function get_excerpt($limit, $source = null){
 }
 
 function yp_popup_search(){
-  // if (isset($_GET['_sf_s'])) {
-  //   $s = $_GET['_sf_s'];
-  // }
-  // else {
-  //   $s = $_GET['s'];
-  // }
+  if (isset($_GET['s'])) {
+    $s = $_GET['s'];
+  }
+  else {
+    $s = '';
+  }
   ?>
 	<div class="wrap-all-search">
 		<div class="vc_search-toggle">
@@ -673,3 +732,365 @@ if ( defined( 'JETPACK__VERSION' ) ) {
 }
 
 
+
+
+
+add_action('wp_ajax_return_location', 'return_location_func'); 
+add_action('wp_ajax_nopriv_return_location', 'return_location_func'); 
+function return_location_func(){
+
+	$origin_value = $_POST['origin'];
+    $destination_value = $_POST['destination'];
+	$selected_package_car_type = $_POST['selected_package_car_type'];
+	$selected_package_price = $_POST['selected_package_price'];
+
+	if(!empty($origin_value)){
+		$origin_value = urldecode($origin_value);
+	}
+
+	
+	if(!empty($destination_value)){
+		$destination_value = urldecode($destination_value);
+	}
+
+	if(!empty($selected_package_car_type)){
+		$selected_package_car_type = urldecode($selected_package_car_type);
+	}
+	
+	if(!empty($selected_package_price)){
+		$selected_package_price = urldecode($selected_package_price);
+		$selected_package_price = str_replace(' บาท', '', $selected_package_price);
+	}
+
+	// echo $selected_package_price;
+	// echo $selected_package_car_type;
+
+	// echo $origin_value;
+	// echo ' to ';
+	// echo $destination_value;
+
+
+	    $args = [
+        'post_type'      => 'package_rent',
+        'posts_per_page' => -1,
+        'meta_query'     => [
+            'relation' => 'AND',
+            [
+                'key'     => 'origin',
+                'value'   => $origin_value,
+                'compare' => 'LIKE'
+            ],
+            [
+                'key'     => 'destination',
+                'value'   => $destination_value,
+                'compare' => 'LIKE'
+            ],
+            [
+                'key'     => 'car_type',
+                'value'   => $selected_package_car_type,
+                'compare' => 'LIKE'
+            ],
+        ],
+    ];
+
+    $query = new WP_Query($args);
+    $output = '';
+	$price_return = 0;
+    // print_r($query);
+
+    if ($query->have_posts()) {
+
+		$output = 'found';
+		while ($query->have_posts()) {
+			$query->the_post();
+			$price_return = (int) str_replace(',', '', get_field('price'));			
+		}
+		wp_reset_postdata();
+	} else {
+		$output = 'not_found';
+	}
+
+
+
+	wp_send_json(['status' => $output, 'price' => $price_return]);
+	exit();
+}
+
+
+
+
+
+
+// ========= Parking Booking Email Template =========
+function generate_parking_booking_email_template_v2($booking_body) {
+    $site_name = get_bloginfo('name');
+    $site_url = get_bloginfo('url');
+  
+    
+    $html = '<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <title>Booking Confirmation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    @media screen and (max-width:600px){
+      .container{width:100% !important}
+      .px-24{padding-left:16px !important; padding-right:16px !important}
+      .py-32{padding-top:20px !important; padding-bottom:20px !important}
+      .stack{display:block !important; width:100% !important}
+      .text-center-sm{text-align:center !important}
+    }
+    a[x-apple-data-detectors]{color:inherit !important; text-decoration:none !important;}
+    body {margin:0; padding:0; background:#f2f4f6; font-family:Arial, Helvetica, sans-serif;}
+    table {border-collapse: collapse;}
+  </style>
+</head>
+<body style="margin:0; padding:0; background:#f2f4f6; font-family:Arial, Helvetica, sans-serif;">
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tr>
+      <td align="center" style="padding:0 12px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px; max-width:600px; background:#ffffff; border-radius:8px; overflow:hidden;">
+
+        <!-- Header -->
+          <tr>
+            <td bgcolor="#29b2e2" style="padding:18px 24px; color:#ffffff;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td class="text-center-sm" style="font-weight:bold; font-size:20px;color:#ffffff">' . $site_name . '</td>
+                  <td align="right" style="color:#FFF;" class="text-center-sm">Parking and Shuttle</td>
+                </tr>
+              </table>
+            </td>
+          </tr>';
+
+      $html .= $booking_body;
+
+      $html .= '
+          <!-- Promo block -->
+          <tr>
+            <td bgcolor="#29b2e2" align="center" style="padding:28px 24px; color:#ffffff;">
+              <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">Need Help? We’re Here for You!</div>
+              <div style="font-size:14px; font-weight:bold; margin-bottom:10px;">If you have any questions or need assistance, please feel free to reach us</div>
+              <div style="font-size:14px; margin-bottom:15px;">LINE Official Account: @okparking24</div>
+              <div style="font-size:14px; margin-bottom:15px;">Phone: +6696-286-4050</div>
+              <div style="font-size:14px; margin-bottom:15px;">Email: okparking.net@gmail.com</div>
+              <div style="font-size:17px; font-weight:bold; margin-bottom:10px;">Thank you for choosing OK Parking.<BR>We look forward to welcoming you!</div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding:24px; background:#f7f7f7;">
+              <div style="font-size:12px; color:#666;">
+                <div>Copyright © <strong>' . $site_name . '</strong> All rights reserved.</div>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>';
+    
+    
+    return $html;
+}
+
+
+
+// Function to generate car rental booking email template
+function generate_carrent_booking_email_template_v2($booking_data) {
+    $site_name = get_bloginfo('name');
+    $site_url = get_bloginfo('url');
+
+    
+    $html = '<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <title>Car Rental Booking Confirmation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    @media screen and (max-width:600px){
+      .container{width:100% !important}
+      .px-24{padding-left:16px !important; padding-right:16px !important}
+      .py-32{padding-top:20px !important; padding-bottom:20px !important}
+      .stack{display:block !important; width:100% !important}
+      .text-center-sm{text-align:center !important}
+    }
+    a[x-apple-data-detectors]{color:inherit !important; text-decoration:none !important;}
+    body {margin:0; padding:0; background:#f2f4f6; font-family:Arial, Helvetica, sans-serif;}
+    table {border-collapse: collapse;}
+  </style>
+</head>
+<body style="margin:0; padding:0; background:#f2f4f6; font-family:Arial, Helvetica, sans-serif;">
+
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tr>
+      <td align="center" style="padding:0 12px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px; max-width:600px; background:#ffffff; border-radius:8px; overflow:hidden;">
+          
+          <!-- Header -->
+          <tr>
+            <td bgcolor="#e67e22" style="padding:18px 24px; color:#ffffff;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td class="text-center-sm" style="color:#FFF; font-weight:bold; font-size:20px;">' . $site_name . '</td>
+                  <td align="right" style="color:#FFF;" class="text-center-sm">
+                    Parking and Shuttle
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>';
+
+          
+
+          $html .= $booking_data;
+
+
+      
+    
+    $html .= '
+          <!-- Promo block -->
+          <tr>
+            <td bgcolor="#e67e22" align="center" style="padding:28px 24px; color:#ffffff;">
+              <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">Contact OK Parking</div>
+              <div style="font-size:14px; font-weight:bold; margin-bottom:10px;">If you have any questions or need assistance, please feel free to reach us</div>
+              <div style="font-size:14px; margin-bottom:15px;">LINE Official Account: @okparking24</div>
+              <div style="font-size:14px; margin-bottom:15px;">Phone: +6696-286-4050</div>
+              <div style="font-size:14px; margin-bottom:15px;">Email: okparking.net@gmail.com</div>
+              <div style="font-size:17px; font-weight:bold; margin-bottom:10px;">Thank you for choosing OK Parking.<BR>We look forward to welcoming you!</div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding:24px; background:#f7f7f7;">
+              <div style="font-size:12px; color:#666;">
+                <div>Copyright © <strong>' . $site_name . '</strong> All rights reserved.</div>
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>';
+
+    
+    return $html;
+}
+
+
+
+
+// Add custom cron schedule for every 30 minutes
+function add_every_30_minutes($schedules) {
+    $schedules['every_30_minutes'] = array(
+        'interval' => 1800, // 30 minutes in seconds
+        'display' => __('Every 30 minutes')
+    );
+    return $schedules;
+}
+add_filter('cron_schedules', 'add_every_30_minutes');
+
+// ParkingReminder cron function
+function parking_reminder_cron() {
+
+    ob_start();
+    $booking_id = 7955;
+    $order_id = get_field('order_code', $booking_id);
+    $booking_data = array();
+    $to = get_field('email_park',$booking_id);
+    $subject = 'OK Parking - [Parking Service] Reminder: Your booking starts soon (Booking No. [' . $order_id . '])';
+    $headers = array('Content-Type: text/html; charset=UTF-8');
+
+    $full_name = get_field('fullname_park', $booking_id); 
+    $start_date = get_field('start_date', $booking_id);
+    $start_time = get_field('start_time', $booking_id);
+    $location_park = get_field('location_park', $booking_id);
+    $vehicle_info = get_field('vehicle_info', $booking_id);
+    $license_plate = '';
+    foreach($vehicle_info as $vehicle){
+        if ($license_plate != '') $license_plate .= ', ';
+        $license_plate .= $vehicle['license_plate'];
+    }
+
+        // $profile_data = get_field('profile_information', $parking_booking_id);
+      
+        $body_content = '
+          <!-- Title -->
+           <tr>
+            <td align="left" class="px-24 py-32" style="padding:28px 24px;">
+              <img src="' . get_stylesheet_directory_uri() . '/customize/img/logo-okpark.jpg" width="60" height="60" alt="Success" style="display:block; margin:0 auto 12px; border-radius:32px;">
+              <div style="font-size:14px;line-height:20px; font-weight:bold; color:#333;">Dear '.$full_name.',</div>
+              <div style="font-size:13px;line-height:20px; color:#666;">
+              This is a reminder that your parking booking is starting soon.
+              </div>
+            </td>
+          </tr>
+
+
+          <!-- Summary Details -->
+          <tr>
+            <td class="px-24" style="padding:0 24px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 15px; border:1px solid #e5e7eb; border-radius:6px;">
+              <tbody>
+              <tr>
+                  <td colspan="2" style="padding:16px; font-weight:bold; color:#111827;">Booking Details</td>
+                </tr>
+                    <tr>
+                  <td style="padding:12px 16px; color:#666;">Parking Location</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $location_park . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">Start Date & Time:</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $start_date . ' ' . $start_time . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">Vehicle Plate No.</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $license_plate . '</td>
+                </tr>
+                
+            <tr>
+             <td colspan="2" style="padding:16px; text-align:center;">
+                <div style="text-align:center;">
+                    <div style="font-weight:bold; color:#111; margin-bottom:10px;font-size:12px;">Please use the QR Code below to Check-in when you arrive at the parking area.</div>
+                        <div style="display:inline-block; padding:15px; background:#ffffff; border:1px solid #e5e7eb; border-radius:8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <img style="width:200px; height:200px;" alt="QR Code" src="' . esc_url_raw(get_field('qr_code_url', $booking_id)) . '">
+                        </div>
+                    <div style="font-size:12px; color:#666; margin-top:8px;">Please show this QR Code at the entry and exit points</div>
+                </div>
+             </td>
+            </tr>
+              </tbody>
+              </table>
+            </td>
+          </tr>';
+
+    echo generate_parking_booking_email_template_v2($body_content);
+    $body = ob_get_contents();
+    ob_end_clean();
+
+    wp_mail( $to, $subject, $body, $headers );
+}
+
+// Schedule the ParkingReminder event
+function schedule_parking_reminder() {
+    if (!wp_next_scheduled('parking_reminder_event')) {
+        wp_schedule_event(time(), 'every_30_minutes', 'parking_reminder_event');
+    }
+}
+add_action('wp', 'schedule_parking_reminder');
+
+// Hook the cron function to the event
+// add_action('parking_reminder_event', 'parking_reminder_cron');

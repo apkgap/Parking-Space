@@ -6,7 +6,7 @@ function enqueue_car_rental_scripts() {
         wp_enqueue_script('car-rental-script', get_template_directory_uri() . '/customize/js/carrent.js', array('jquery'), null, true);
         
         // Enqueue ajax-carrent.js with localized data
-        wp_enqueue_script('ajax-carrent-script', get_template_directory_uri() . '/customize/js/ajax-carrent.js', array('jquery'), null, true);
+        wp_enqueue_script('ajax-carrent-script', get_template_directory_uri() . '/customize/js/ajax-carrent.js', array('jquery'), '1.1', true);
         wp_localize_script('ajax-carrent-script', 'ajax_carrent_obj', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('carrent_nonce')
@@ -327,9 +327,9 @@ function ajax_insert_car_rent_acf() {
             }
             
             // Check if round trip is selected and multiply price by 2
-            if (isset($sanitized_fields['trip_type']) && $sanitized_fields['trip_type'] == 1) {
-                $total_price = $total_price * 2;
-            }
+            // if (isset($sanitized_fields['trip_type']) && $sanitized_fields['trip_type'] == 1) {
+            //     $total_price = $total_price * 2;
+            // }
             
             // Create WooCommerce order
             $order = wc_create_order();
@@ -346,6 +346,11 @@ function ajax_insert_car_rent_acf() {
                     'total' => $total_price
                 )
             );
+
+                  // Add order meta data
+            $order->add_order_note('Car rental booking ID: ' . $post_id);
+            $order->add_meta_data('carrent_booking_id', $post_id);
+            $order->add_meta_data('carrent_order_code', $booking_ref);
             
             // Set order details
             $order->set_address(array(
@@ -354,9 +359,7 @@ function ajax_insert_car_rent_acf() {
                 'phone'      => $sanitized_fields['personal_information']['phone_number'] ?? ''
             ), 'billing');
             
-            // Add order meta data
-            $order->add_meta_data('carrent_booking_id', $post_id);
-            $order->add_meta_data('carrent_order_code', $booking_ref);
+      
             
             // Add travel dates if available
             if (isset($sanitized_fields['travel_information_outbound_trip']['depart_date'])) {
@@ -435,9 +438,22 @@ function ajax_insert_car_rent_acf() {
 }
 
 
+// function chk_ttt(){
+//     // $order = wc_get_order('7958');
+//     // if (!$order) return;
+    
+//     // // Get car rental booking ID from order meta
+//     // $carrent_booking_id = $order->get_meta('carrent_booking_id');
+//       // echo "Booking ID: " . $carrent_booking_id;
+//     $profile_data = get_field('personal_information', 7957);
+//     print_r($profile_data);
+//     echo "Booking ID: " . $carrent_booking_id;
+// }
+// add_action('init', 'chk_ttt');
+
 // WooCommerce Order Hooks for Car Rental Booking
-add_action('woocommerce_order_status_completed', 'update_carrent_booking_on_order_complete');
-// add_action('woocommerce_order_status_processing', 'update_carrent_booking_on_order_complete');
+// add_action('woocommerce_order_status_completed', 'update_carrent_booking_on_order_complete');
+add_action('woocommerce_order_status_processing', 'update_carrent_booking_on_order_complete');
 
 // Hook to redirect after payment completion
 add_action('woocommerce_thankyou', 'carrent_redirect_after_payment', 10, 1);
@@ -478,6 +494,9 @@ function update_carrent_booking_on_order_complete($order_id) {
             'user_id' => 0
         );
         wp_insert_comment($comment_data);
+
+  
+        
         
         // Send confirmation email if needed
         send_carrent_confirmation_email($carrent_booking_id, $order_id);
@@ -507,13 +526,18 @@ function generate_carrent_booking_email_template($booking_data, $order_code, $po
     $site_name = get_bloginfo('name');
     $site_url = get_bloginfo('url');
     $admin_email = get_option('admin_email');
+  
     
     // Extract customer information
-    $full_name = isset($booking_data['profile']['fullname']) ? esc_html($booking_data['profile']['fullname']) : '';
+    $full_name = isset($booking_data['profile']['full_name']) ? esc_html($booking_data['profile']['full_name']) : '';
     $email = isset($booking_data['profile']['email']) ? esc_html($booking_data['profile']['email']) : '';
-    $phone = isset($booking_data['profile']['phone']) ? esc_html($booking_data['profile']['phone']) : '';
-    $line_id = isset($booking_data['profile']['lineid']) ? esc_html($booking_data['profile']['lineid']) : '';
+    $phone = isset($booking_data['profile']['phone_number']) ? esc_html($booking_data['profile']['phone_number']) : '';
+    $line_id = isset($booking_data['profile']['line_id_whatsapp']) ? esc_html($booking_data['profile']['line_id_whatsapp']) : '';
     
+
+
+
+
     // Extract booking dates and times
     $start_date = isset($booking_data['startDate']) ? esc_html($booking_data['startDate']) : '';
     $start_time = isset($booking_data['startTime']) ? esc_html($booking_data['startTime']) : '';
@@ -525,9 +549,43 @@ function generate_carrent_booking_email_template($booking_data, $order_code, $po
     $return_location = isset($booking_data['returnLocation']) ? esc_html($booking_data['returnLocation']) : '';
     
     // Extract vehicle information
-    $vehicle_type = isset($booking_data['vehicleType']) ? esc_html($booking_data['vehicleType']) : '';
     $total_price = isset($booking_data['totalPrice']) ? esc_html($booking_data['totalPrice']) : '';
     
+
+    $flight_information = isset($booking_data['flightData']) ? $booking_data['flightData'] : array();
+    $arrival_flight_no = isset($flight_information['arrival_flight_no']) ? esc_html($flight_information['arrival_flight_no']) : '';
+    $arrival_flight_time = isset($flight_information['arrival_flight_time']) ? esc_html($flight_information['arrival_flight_time']) : '';
+    $departure_flight_no = isset($flight_information['departure_flight_no']) ? esc_html($flight_information['departure_flight_no']) : '';
+    $departure_flight_time = isset($flight_information['departure_flight_time']) ? esc_html($flight_information['departure_flight_time']) : '';
+
+    $selectedPackage = isset($booking_data['selectedPackage']) ? $booking_data['selectedPackage'] : array();
+    $vehicle_type = isset($selectedPackage['car_type']) ? esc_html($selectedPackage['car_type']) : '';
+    $booking_details = isset($booking_data['booking_details']) ? $booking_data['booking_details'] : array();
+    $adultCount = isset($booking_details['adult_count']) ? esc_html($booking_details['adult_count']) : '';
+    $childCount = isset($booking_details['child_count']) ? esc_html($booking_details['child_count']) : '';
+
+    $return_trip = isset($booking_data['returnTrip']) ? $booking_data['returnTrip'] : array();
+
+    $return_start_location = isset($return_trip['return_start_location']) ? esc_html($return_trip['return_start_location']) : '';
+    $return_start_location_note = isset($return_trip['return_start_location_note']) ? esc_html($return_trip['return_start_location_note']) : '';
+    $return_destination = isset($return_trip['return_destination']) ? esc_html($return_trip['return_destination']) : '';
+    $return_destination_note = isset($return_trip['return_destination_note']) ? esc_html($return_trip['return_destination_note']) : '';
+    $return_date = isset($return_trip['return_date']) ? esc_html($return_trip['return_date']) : '';
+    $return_time = isset($return_trip['return_time']) ? esc_html($return_trip['return_time']) : '';
+
+    //   ob_start();
+    // $to = 'treelapatx2@gmail.com';
+    // $subject = $vehicle_type;
+    // $headers = array('Content-Type: text/html; charset=UTF-8');
+
+    // print_r($selectedPackage);
+
+    // $body = ob_get_contents();
+    // ob_end_clean();
+
+    // wp_mail( $to, $subject, $body, $headers );
+
+
     $html = '<!DOCTYPE html>
 <html lang="th">
 <head>
@@ -559,94 +617,163 @@ function generate_carrent_booking_email_template($booking_data, $order_code, $po
             <td bgcolor="#e67e22" style="padding:18px 24px; color:#ffffff;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                 <tr>
-                  <td class="text-center-sm" style="font-weight:bold; font-size:20px;">' . $site_name . '</td>
-                  <td align="right" class="text-center-sm">
-                    <a href="' . $site_url . '" style="color:#ffffff; text-decoration:none; font-size:14px;">Car Rental ▸</a>
+                  <td class="text-center-sm" style="color:#FFF; font-weight:bold; font-size:20px;">' . $site_name . '</td>
+                  <td align="right" style="color:#FFF;" class="text-center-sm">
+                    Parking and Shuttle
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Title -->
-           <tr>
-            <td align="center" class="px-24 py-32" style="padding:28px 24px;">
+          
+          <!-- Greeting -->
+          <tr>
+            <td align="left" class="px-24 py-32" style="padding:28px 24px;">
               <img src="' . get_stylesheet_directory_uri() . '/customize/img/logo-okpark.jpg" width="60" height="60" alt="Success" style="display:block; margin:0 auto 12px; border-radius:32px;">
-              <div style="font-size:22px; font-weight:bold; color:#333;">ขอบคุณสำหรับการจองรถเช่า!</div>
-              <div style="font-size:13px; color:#666;">เราได้รับคำสั่งซื้อแล้วและกำลังจัดเตรียมรถให้คุณ</div>
+              <div style="font-size:14px;line-height:20px; font-weight:bold; color:#333;">Dear '.$full_name.',</div>
+              <div style="font-size:13px; color:#666;">
+              OK Parking is pleased to confirm that your payment for booking number '.$order_code.'<BR>has been successfully verified, and your booking is now complete.
+              </div>
             </td>
           </tr>
 
-          <!-- Order summary -->
+
+          
+          
           <tr>
             <td class="px-24" style="padding:0 24px 8px;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e5e7eb; border-radius:6px;">
                 <tr>
-                  <td colspan="2" style="padding:16px; font-weight:bold; color:#111827;">สรุปรายการจองรถเช่า</td>
+                  <td colspan="2" style="padding:16px; font-weight:bold; color:#111827;">Booking Details</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 16px; color:#666;">หมายเลขออเดอร์</td>
+                  <td style="padding:12px 16px; color:#666;">Passenger Name</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $full_name . '</td>
+                </tr>
+                  <tr>
+                  <td style="padding:12px 16px; color:#666;">Booking Number</td>
                   <td align="right" style="padding:12px 16px; color:#111;">' . $order_code . '</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 16px; color:#666;">ชื่อผู้จอง</td>
-                  <td align="right" style="padding:12px 16px; color:#111;">' . $full_name . '</td>
+                  <td style="padding:12px 16px; color:#666;">Travel Date</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $start_date . '</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 16px; color:#666;">อีเมล</td>
-                  <td align="right" style="padding:12px 16px; color:#111;">' . $email . '</td>
+                  <td style="padding:12px 16px; color:#666;">Pickup Time</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $start_time . '</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 16px; color:#666;">เบอร์โทรศัพท์</td>
-                  <td align="right" style="padding:12px 16px; color:#111;">' . $phone . '</td>
-                </tr>
-                <tr>
-                  <td style="padding:12px 16px; color:#666;">LINE ID</td>
-                  <td align="right" style="padding:12px 16px; color:#111;">' . $line_id . '</td>
-                </tr>
-                <tr>
-                  <td style="padding:12px 16px; color:#666;">ประเภทรถ</td>
-                  <td align="right" style="padding:12px 16px; color:#111;">' . $vehicle_type . '</td>
-                </tr>
-                <tr>
-                  <td style="padding:12px 16px; color:#666;">สถานที่รับรถ</td>
+                  <td style="padding:12px 16px; color:#666;">Pickup Location</td>
                   <td align="right" style="padding:12px 16px; color:#111;">' . $pickup_location . '</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 16px; color:#666;">สถานที่คืนรถ</td>
+                  <td style="padding:12px 16px; color:#666;">Drop-off Location</td>
                   <td align="right" style="padding:12px 16px; color:#111;">' . $return_location . '</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 16px; color:#666;">วันที่รับรถ</td>
-                  <td align="right" style="padding:12px 16px; color:#111;">' . $start_date . ' ' . $start_time . '</td>
+                  <td style="padding:12px 16px; color:#666;">Vehicle Type</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $vehicle_type . '</td>
                 </tr>
                 <tr>
-                  <td style="padding:12px 16px; color:#666;">วันที่คืนรถ</td>
-                  <td align="right" style="padding:12px 16px; color:#111;">' . $end_date . ' ' . $end_time . '</td>
+                  <td style="padding:12px 16px; color:#666;">Passengers</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">Adults: ' . $adultCount . ' / Children: ' . $childCount . '</td>
                 </tr>';
-    
-    if (!empty($total_price)) {
-        $html .= '<tr>
-                  <td style="padding:12px 16px; color:#666; font-weight:bold;">ราคารวม</td>
-                  <td align="right" style="padding:12px 16px; color:#111; font-weight:bold;">' . number_format($total_price) . ' บาท</td>
+
+
+                  if (!empty($total_price)) {
+              $html .= '<tr>
+                  <td style="padding:12px 16px; color:#666; font-weight:bold;">Amount Paid</td>
+                  <td align="right" style="padding:12px 16px; color:#111; font-weight:bold;">' . number_format($total_price) . ' THB</td>
                 </tr>';
-    }
-    
-    $html .= '              </table>
+                }
+                
+              
+    $html .= '</table>
             </td>
           </tr>';
+
+    //  $return_start_location = isset($return_trip['return_start_location']) ? esc_html($return_trip['return_start_location']) : '';
+    // $return_start_location_note = isset($return_trip['return_start_location_note']) ? esc_html($return_trip['return_start_location_note']) : '';
+    // $return_destination = isset($return_trip['return_destination']) ? esc_html($return_trip['return_destination']) : '';
+    // $return_destination_note = isset($return_trip['return_destination_note']) ? esc_html($return_trip['return_destination_note']) : '';
+    // $return_date = isset($return_trip['return_date']) ? esc_html($return_trip['return_date']) : '';
+    // $return_time = isset($return_trip['return_time']) ? esc_html($return_trip['return_time']) : '';
+
+
+      if(!empty($return_trip)){
+          $html .= '<tr>
+            <td class="px-24" style="padding:0 24px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e5e7eb; border-radius:6px;">
+                <tr>
+                  <td colspan="2" style="padding:16px; font-weight:bold; color:#111827;">Return Trip</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">Return Date</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $return_date . '</td>
+                </tr>
+                  <tr>
+                  <td style="padding:12px 16px; color:#666;">Pickup Time</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $return_time . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">Pickup Location</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $return_start_location . '</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">Drop-off Location</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $return_destination . '</td>
+                </tr>
+              ';
+        $html .= '</table>
+                </td>
+              </tr>';
+        }
+
+
+          
+    // $flight_information = isset($booking_data['flightData']) ? $booking_data['flightData'] : array();
+    // $arrival_flight_no = isset($flight_information['arrival_flight_no']) ? esc_html($flight_information['arrival_flight_no']) : '';
+    // $arrival_flight_time = isset($flight_information['arrival_flight_time']) ? esc_html($flight_information['arrival_flight_time']) : '';
+    // $departure_flight_no = isset($flight_information['departure_flight_no']) ? esc_html($flight_information['departure_flight_no']) : '';
+    // $departure_flight_time = isset($flight_information['departure_flight_time']) ? esc_html($flight_information['departure_flight_time']) : '';
+
+        
+      if(!empty($flight_information)){
+          $html .= '<tr>
+            <td class="px-24" style="padding:0 24px 8px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border:1px solid #e5e7eb; border-radius:6px;">
+                <tr>
+                  <td colspan="2" style="padding:16px; font-weight:bold; color:#111827;">Flight Information</td>
+                </tr>
+                <tr>
+                  <td style="padding:12px 16px; color:#666;">Arrival Flight</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $arrival_flight_no . ' at ' . $arrival_flight_time . '</td>
+                </tr>
+                  <tr>
+                  <td style="padding:12px 16px; color:#666;">Departure Flight</td>
+                  <td align="right" style="padding:12px 16px; color:#111;">' . $departure_flight_no . ' at ' . $departure_flight_time . '</td>
+                </tr>
+              ';
+        $html .= '</table>
+                </td>
+              </tr>';
+        }
+
+
+
+      
     
     $html .= '
           <!-- Promo block -->
           <tr>
             <td bgcolor="#e67e22" align="center" style="padding:28px 24px; color:#ffffff;">
-              <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">ขอบคุณที่ใช้บริการของเรา!</div>
-              <div style="font-size:14px; margin-bottom:15px;">หากมีข้อสงสัยกรุณาติดต่อ: ' . $admin_email . '</div>
-              <a href="' . $site_url . '" 
-                 style="display:inline-block; background:#d35400; color:#ffffff; text-decoration:none; 
-                        padding:12px 22px; border-radius:4px; font-weight:bold; font-size:14px;">
-                กลับไปที่เว็บไซต์
-              </a>
+              <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">Contact OK Parking</div>
+              <div style="font-size:14px; font-weight:bold; margin-bottom:10px;">If you have any questions or need assistance, please feel free to reach us</div>
+              <div style="font-size:14px; margin-bottom:15px;">LINE Official Account: @okparking24</div>
+              <div style="font-size:14px; margin-bottom:15px;">Phone: +6696-286-4050</div>
+              <div style="font-size:14px; margin-bottom:15px;">Email: okparking.net@gmail.com</div>
+              <div style="font-size:17px; font-weight:bold; margin-bottom:10px;">Thank you for choosing OK Parking.<BR>We look forward to welcoming you!</div>
             </td>
           </tr>
 
@@ -654,11 +781,7 @@ function generate_carrent_booking_email_template($booking_data, $order_code, $po
           <tr>
             <td align="center" style="padding:24px; background:#f7f7f7;">
               <div style="font-size:12px; color:#666;">
-                <div><strong>' . $site_name . '</strong> • ' . $admin_email . '</div>
-                <div style="margin-top:8px;">
-                  <a href="' . $site_url . '/preferences" style="color:#e67e22; text-decoration:none;">ตั้งค่าการรับอีเมล</a> • 
-                  <a href="' . $site_url . '/unsubscribe" style="color:#e67e22; text-decoration:none;">ยกเลิกรับข่าวสาร</a>
-                </div>
+                <div>Copyright © <strong>' . $site_name . '</strong> All rights reserved.</div>
               </div>
             </td>
           </tr>
@@ -680,14 +803,16 @@ function generate_carrent_booking_email_template($booking_data, $order_code, $po
         );
         
         // Email subject
-        $subject = 'ยืนยันการจองรถเช่า - ' . $order_code . ' - ' . $site_name;
+        $subject = 'OK Parking - [Private Car Service] Booking Confirmed (Booking No. ' . $order_code . ')';
+
         
         try {
             // Send email to customer
             $customer_sent = wp_mail($customer_email, $subject, $html, $headers);
             
             // Send email to admin with different subject
-            $admin_subject = 'มีการจองรถเช่าใหม่ - ' . $order_code;
+            $admin_subject = 'บริการรถยนต์ส่วนตัวเดินทาง – การจองใหม่ (Booking No. ' . $order_code . ')';
+
             $admin_sent = wp_mail($admin_email, $admin_subject, $html, $headers);
             
             // Log email sending results
@@ -711,6 +836,8 @@ function generate_carrent_booking_email_template($booking_data, $order_code, $po
     return $html;
 }
 
+
+
 // Function to send car rental confirmation email after payment
 function send_carrent_confirmation_email($carrent_booking_id, $order_id) {
     $order = wc_get_order($order_id);
@@ -718,6 +845,8 @@ function send_carrent_confirmation_email($carrent_booking_id, $order_id) {
         error_log("WooCommerce order not found for ID: $order_id");
         return;
     }
+
+  
     
     // Get order code
     $order_code = $order->get_meta('carrent_order_code');
@@ -729,8 +858,12 @@ function send_carrent_confirmation_email($carrent_booking_id, $order_id) {
     // Try to reconstruct booking data from ACF fields
     $booking_data = array();
     
+
     // Get profile information
     $profile_data = get_field('personal_information', $carrent_booking_id);
+    // $order->add_order_note($profile_data['fullname']);
+
+
     if (!$profile_data) {
         // Fallback: construct from individual fields
         $profile_data = array(
@@ -740,7 +873,10 @@ function send_carrent_confirmation_email($carrent_booking_id, $order_id) {
             'lineid' => get_field('customer_line_id', $carrent_booking_id)
         );
     }
-    
+
+    $flight_information = get_field('flight_information', $carrent_booking_id);
+
+
     // Check if we have customer email
     if (empty($profile_data['email'])) {
         // Try to get email from WooCommerce order
@@ -754,15 +890,23 @@ function send_carrent_confirmation_email($carrent_booking_id, $order_id) {
     }
     
     $booking_data['profile'] = $profile_data;
-    $booking_data['startDate'] = get_field('pickup_date', $carrent_booking_id);
+    $booking_data['flightData'] = $flight_information;
+    $booking_data['booking_details'] = get_field('booking_details', $carrent_booking_id);
+    $booking_data['returnTrip'] = get_field('travel_information_return_trip', $carrent_booking_id);
+    $booking_data['startDate'] = get_field('depart_date', $carrent_booking_id);
     $booking_data['endDate'] = get_field('return_date', $carrent_booking_id);
-    $booking_data['startTime'] = get_field('pickup_time', $carrent_booking_id);
+    $booking_data['startTime'] = get_field('depart_time', $carrent_booking_id);
     $booking_data['endTime'] = get_field('return_time', $carrent_booking_id);
-    $booking_data['pickupLocation'] = get_field('pickup_location', $carrent_booking_id);
-    $booking_data['returnLocation'] = get_field('return_location', $carrent_booking_id);
-    $booking_data['vehicleType'] = get_field('vehicle_type', $carrent_booking_id);
-    $booking_data['totalPrice'] = get_field('total_price', $carrent_booking_id);
+    $booking_data['pickupLocation'] = get_field('depart_destination', $carrent_booking_id);
+    $booking_data['returnLocation'] = get_field('return_destination', $carrent_booking_id);
+    // $booking_data['vehicleType'] = get_field('car_type', $carrent_booking_id);
+    $booking_data['totalPrice'] = $order->get_total();
+    $booking_data['selectedPackage'] = get_field('selected_package', $carrent_booking_id);
+
+
     
+  
+
     // Use the beautiful email template function
     generate_carrent_booking_email_template($booking_data, $order_code, $carrent_booking_id, $profile_data['email']);
     

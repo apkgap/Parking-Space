@@ -92,7 +92,6 @@ jQuery(document).ready(function($) {
             }
     
             const data = await response.json();
-            console.log(`API Response for ${selectId}:`, data);
     
             if (!data || data.length === 0) {
                 selectElement.innerHTML = `<option value="">${defaultText}</option><option value="" disabled>ไม่มีข้อมูล</option>`;

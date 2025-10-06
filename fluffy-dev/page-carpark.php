@@ -236,7 +236,8 @@ get_header();
                             <div class="addon-information">
                                 <!-- บริการเสริม -->
                                 <div class="mb-4">
-                                <div class="font-[600] text-base mb-2 text-red-600"><span class="text-red-500 pr-2">*</span>ฟรี บริการเสริม</div>
+                                <div class="font-[600] text-base mb-2 text-red-600">ฟรี บริการเสริม</div>
+                                <!-- <span class="text-red-500 pr-2"></span> -->
                                 <div class="flex flex-col gap-2">
                                     <label for="service_pickup" class="inline-flex items-center cursor-pointer">
                                         <input
@@ -256,7 +257,7 @@ get_header();
                                             class="form-checkbox text-blue-600 checkbox checkbox-primary text-white border border-primary"
                                             value="valet"
                                         />
-                                        <span class="ml-2">บริการรับจอด - รับส่งรถ สนามบิน</span>
+                                        <span class="ml-2">บริการรับจอด - รับส่งรถ สนามบิน (จะให้บริการในอนาคต)</span>
                                     </label>
 
                                 </div>

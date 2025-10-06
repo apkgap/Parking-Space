@@ -18,11 +18,19 @@ body{
     margin-bottom: 30px;
 }
 .v-post-loop.-card {
-    -ms-grid-columns: (minmax(0,1fr))[3];
+    /* -ms-grid-columns: (minmax(0,1fr))[3]; */
     grid-template-columns: repeat(3,minmax(0,1fr));
     display: grid;
     grid-gap: 25px;
     margin: 50px 0 60px;
+}
+span.step-icon {
+    width: 2.3rem;
+    height: 2.3rem;
+}
+span.step-icon svg{
+    width: 20px;
+    height: 20px;
 }
 .v-post-loop.-card .post-info {
     padding: 15px 15px 25px;
@@ -51,9 +59,87 @@ color: #000;
 .single-wpt_parkings .wpt-slide-image {
   height: 170px !important;
 }
+
+.woocommerce-order-received .entry-content:after {
+    content: 'Loading...';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.woocommerce-order-received .site-main {
+    background: #FFF;
+}
+.woocommerce-order-received .woocommerce-order {
+    height: 100dvh;
+    opacity: 0;
+}
+
+
+
+.page-template-page-rentcar .form-checkbox {
+    border-color: #ff7f00!important;
+}
+
+.page-template-page-rentcar .step.step-primary .step-icon {
+    background: #ff7f00;
+    border-color: #ff7f00;
+}
+
+.page-template-page-rentcar #carBookingFormBtn,
+.page-template-page-rentcar #apply-coupon-btn,
+.page-template-page-rentcar #carrent-search-btn {
+    background: #ff7f00!important;
+    --btn-color: #ff7f00!important;
+    outline: none!important;
+    border-color: #ff7f00!important;
+}
+
+.page-template-page-rentcar #apply-coupon-btn:hover,
+.page-template-page-rentcar #carBookingFormBtn:hover,
+.page-template-page-rentcar #carrent-search-btn:hover {
+    background: #ff7f00 !important;
+    box-shadow: 0 6px 20px #ea906699 !important;
+}
+
+.page-template-page-rentcar .input-field:focus,
+.page-template-page-rentcar .input-fieldx:focus,
+.page-template-page-rentcar .select2-search--dropdown .select2-search__field:focus,
+.page-template-page-rentcar .select2-dropdown,
+.page-template-page-rentcar .select2-container--default .select2-selection--single:hover,
+.page-template-page-rentcar .select2-container--default.select2-container--focus .select2-selection--single{
+  border-color: #ff7f00!important;
+}
+.page-template-page-rentcar span.cc-t {
+    background: #fff3e6!important;
+}
+
+.page-template-page-rentcar .select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: #ff7f00 transparent transparent transparent !important;
+}   
+
+.page-template-page-rentcar .quantity-display,
+.page-template-page-rentcar span.cc-t,
+.page-template-page-rentcar .range,
+.page-template-page-rentcar .text-primary{
+  color: #ff7f00 !important;
+}
+.page-template-page-rentcar input:checked,
+.page-template-page-rentcar .bg-primary{
+  background: #ff7f00 !important;
+}
+
+  .page-template-page-rentcar .input-field:focus,
+.page-template-page-rentcar .input-fieldx:focus  {
+      box-shadow: 0 0 0 2px rgb(233 97 0 / 20%);
+}
+label.disabled[for="trip-type"] {
+    pointer-events: none;
+    opacity: 0.4;
+}
 @media (max-width:767px) {
   .v-post-loop.-card {
-      -ms-grid-columns: (minmax(0,1fr))[2];
+      /* -ms-grid-columns: (minmax(0,1fr))[2]; */
       grid-template-columns: repeat(2,minmax(0,1fr));
       grid-gap: 15px;
       margin: 45px 0 70px;
@@ -250,7 +336,14 @@ margin-left: 0;
 
 body, html {
     width: 100%;
-    overflow-x: hidden;
+      overflow-x: initial !important;
+}
+#summary-box {
+    top: 115px;
+    position: sticky;
+}
+body.admin-bar #summary-box {
+    top: 155px;
 }
 .site {
     position: relative;
@@ -327,7 +420,7 @@ header.site-header.fixed {
     width: 17px;
     margin-left: -10px;
     cursor: pointer;
-    margin-right: 10px;
+    margin-right: 0;
     display: block;
     margin-top: 0;
 }

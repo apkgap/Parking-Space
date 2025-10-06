@@ -40,7 +40,7 @@ get_header();
             <!-- Form Section -->
             <div class="w-full lg:w-[70%] space-y-8">
                     <!-- Personal Information Card -->
-                    <div class="bg-white rounded-xl shadow-md sticky top-8 p-4 sm:p-6 md:p-8">
+                    <div class="bg-white rounded-xl shadow-md top-8 p-4 sm:p-6 md:p-8">
                         <h2 class="text-2xl font-bold mb-2 text-black">ข้อมูลส่วนตัว</h2>
                         <p class="text-sm text-gray-500 mb-6">*กรุณากรอกข้อมูลให้ครบถ้วน</p>
                         <div class="space-y-4">
@@ -92,7 +92,7 @@ get_header();
                     </div>
 
                     <!-- Travel Information Card -->
-                    <div class="bg-white rounded-xl shadow-md sticky top-8 p-4 sm:p-6 md:p-8">
+                    <div class="bg-white rounded-xl shadow-md top-8 p-4 sm:p-6 md:p-8">
                         <h2 class="text-2xl font-bold mb-4 text-black">ข้อมูลการเดินทาง</h2>
                         <div class="border-t border-gray-200 pt-4 mt-4">
                             <h3 class="font-semibold text-lg mb-2">เที่ยวขาไป</h3>
@@ -172,7 +172,7 @@ get_header();
                         </div>
                         <div class="mb-4">
                             <span class="block text-gray-700 font-medium mb-1"><span class="text-red-500 pr-2">*</span>ลักษณะเที่ยว</span>
-                            <label for="trip-type" class="inline-flex items-center cursor-pointer">
+                            <label for="trip-type" class="inline-flex disabled items-center cursor-pointer">
                                 <input
                                     type="checkbox"
                                     id="trip-type"
@@ -327,7 +327,7 @@ get_header();
                     </div>
 
                     <!-- Flight Information Card -->
-                    <div class="bg-white rounded-xl shadow-md sticky top-8 p-4 sm:p-6 md:p-8">
+                    <div class="bg-white rounded-xl shadow-md top-8 p-4 sm:p-6 md:p-8">
                         <h2 class="text-2xl font-bold mb-4 text-black">ข้อมูลเที่ยวบิน</h2>
                         <div class="flex flex-col md:flex-row gap-4 mb-4">
                             <div class="flex flex-col flex-1 input-group">
@@ -408,7 +408,7 @@ get_header();
 
             <!-- Summary Section -->
             <div id="summary-rentcar" class="w-full lg:w-[30%] mt-8 lg:mt-0">
-                <div class="bg-white rounded-xl shadow-md sticky top-8 p-4 sm:p-6 md:p-8">
+                <div class="bg-white rounded-xl shadow-md top-8 p-4 sm:p-6 md:p-8">
                     <h2 class="text-2xl font-bold mb-4 text-black">สรุปรายละเอียด</h2>
                     
                     <!-- Personal Information Summary -->
@@ -579,6 +579,72 @@ get_header();
     </div>
 </main>
 
+
+
+
+<script>
+    jQuery(document).ready(function($) {
+
+        $('#returnHuaHin').change(function (e) { 
+            e.preventDefault();
+
+                var returnStart = $('#returnStart').val();
+                var returnHuaHin = $(this).val();
+                var selected_package_car_type = $('input[name="selected_package_car_type"]').val();
+                var selected_package_price = $('.wpt_price_start').text();
+
+                $('#box-loading').css('display', 'flex');
+
+                $.ajax({
+                    url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                    type: 'POST',
+                    data: { 
+                        action: 'return_location',
+                        origin: returnStart,
+                        destination: returnHuaHin,
+                        selected_package_car_type: selected_package_car_type,
+                        selected_package_price: selected_package_price
+                    }, 
+
+                    success: function(data) {
+                        $('#box-loading').css('display', 'none');
+                            // console.log(data);
+
+                        if(data != ''){
+                            // data = JSON.parse(data);
+
+                            if(data.status == 'not_found'){
+                                alert('ไม่พบบริการสำหรับเส้นทางนี้');
+                                $('#summary-total-price').html('0 บาท');
+                                $('#summary-grand-total').html('0 บาท');
+                                $('#carBookingFormBtn').addClass('hidden');
+                            } else {
+                                var total_price = parseInt(selected_package_price.replace(/,/g, '').replace(' บาท', ''));
+                                total_price = total_price + parseInt(data.price);
+                                total_price = total_price.toLocaleString('en-US');
+
+                                $('input[name="selected_package_price"]').val(total_price + ' บาท');
+                                
+                                $('#summary-total-price').html(total_price + ' บาท');
+                                $('#summary-grand-total').html(total_price + ' บาท');
+                                $('#carBookingFormBtn').removeClass('hidden');
+                            }
+
+                        }
+
+                    },
+
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching export data:', error);
+                    }
+
+                });
+            
+        });
+    
+            
+    });
+</script>
 
 <?php
 

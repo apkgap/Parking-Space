@@ -7,7 +7,7 @@ function render_route_search_shortcode() {
     
     ob_start();
     ?>
-        <div class="car-route-search-component max-w-7xl mx-auto bg-white rounded-xl shadow-md sticky top-8 p-4 sm:p-6 md:p-8 mb-[2em]">
+        <div class="car-route-search-component max-w-7xl mx-auto bg-white rounded-xl shadow-md p-4 sm:p-6 md:p-8 mb-[2em]">
             <h2 class="text-center text-2xl font-semibold text-gray-800 mb-8">ค้นหาบริการรถเช่า</h2>
 
             <form method="POST" action="" id="route-search-form" class="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0 items-end mb-6">
@@ -266,6 +266,9 @@ function ajax_search_route_pricing() {
                 alert("กรุณาเลือกรายการที่ต้องการ");
                 return;
             }
+
+            document.querySelector("label[for=\'trip-type\']").classList.remove("disabled");
+
             // เก็บข้อมูล row ที่เลือก
             const row = selectedRadio.closest("tr");
             const route = row.querySelector("td:nth-child(1)").innerText.trim();
@@ -379,7 +382,7 @@ function ajax_search_route_pricing() {
                         </div>
                         <div class="bg-white p-4 rounded-lg shadow-sm">
                             <span class="text-sm text-gray-600 block mb-1">ราคา</span>
-                            <span class="font-semibold text-primary text-lg">${price}</span>
+                            <span class="font-semibold text-primary text-lg wpt_price_start">${price}</span>
                         </div>
                     </div>
                     <div class="mt-4 flex justify-end">

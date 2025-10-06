@@ -5,7 +5,7 @@ Template Name: Login Page
 
 get_header(); ?>
 
-<div id="box-login" class="box-login">
+<div id="box-login" class="box-login" style="background-color: #f0f4f8;">
     
     <!-- Notification Modal -->
     <div id="notification-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 hidden">
@@ -129,7 +129,7 @@ get_header(); ?>
                         </div>
                         
                         <!-- Remember Me -->
-                        <div class="flex items-start gap-3 mb-6">
+                        <label for="rememberme" class="flex items-start gap-3 mb-6">
                             <div class="relative mt-0.5">
                                 <input type="checkbox" name="rememberme" id="rememberme" value="forever" class="opacity-0 absolute">
                                 <span class="w-5 h-5 bg-white border-2 border-gray-200 rounded cursor-pointer transition-all duration-300 flex items-center justify-center hover:border-primary">
@@ -138,10 +138,10 @@ get_header(); ?>
                                     </svg>
                                 </span>
                             </div>
-                            <label for="rememberme" class="text-gray-600 text-sm leading-relaxed cursor-pointer">
+                            <span class="text-gray-600 text-sm leading-relaxed cursor-pointer">
                                 <?php _e('Remember Me', 'textdomain'); ?>
-                            </label>
-                        </div>
+                            </span>
+                        </label>
                         
                         <!-- Submit Button -->
                         <button type="submit" id="login-btn" class="w-full py-4 bg-primary text-white border-none rounded-xl text-base font-semibold cursor-pointer transition-all duration-300 relative overflow-hidden btn-shimmer hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-primary/30 active:translate-y-0">
